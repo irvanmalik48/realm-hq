@@ -1,0 +1,27 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "projects": ["realm-hq"],
+  "rules": {
+    "react-doctor/use-lazy-motion": "off",
+    "react-doctor/no-giant-component": "off",
+    "react-doctor/no-high-complexity-react-function": "off",
+    "react-doctor/require-pnpm-hardening": "off",
+    "require-pnpm-hardening": "off",
+    "react-doctor/no-array-index-as-key": "off",
+    "react-hooks-js/set-state-in-effect": "off",
+    "react-doctor/no-adjust-state-on-prop-change": "off",
+    "react-doctor/only-export-components": "off",
+    "react-hooks-js/todo": "off",
+    "react-hooks-js/incompatible-library": "off",
+    "react-doctor/no-locale-format-in-render": "off",
+    "react-doctor/prefer-dynamic-import": "off",
+    "react-doctor/duplicate-jsx-subtree": "off",
+    "react-doctor/rerender-state-only-in-handlers": "off",
+    "react-doctor/prefer-tag-over-role": "off",
+    "react-doctor/no-redundant-roles": "off",
+    "react-doctor/rendering-hydration-no-flicker": "off",
+    "react-doctor/no-initialize-state": "off",
+    "react-doctor/tanstack-table-no-unstable-data-or-columns": "off",
+    "react-doctor/no-async-event-handler-without-reentry-guard": "off"
+  }
+}
