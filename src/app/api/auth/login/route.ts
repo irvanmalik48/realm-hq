@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
 import {
-  getAuthClient,
-  getAdminClient,
-  promisifyUnary,
   createMetadata,
+  getAdminClient,
+  getAuthClient,
+  promisifyUnary,
 } from "@/lib/grpc/client";
 import { formatGrpcError } from "@/lib/grpc/errors";
 
