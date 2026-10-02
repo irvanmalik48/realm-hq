@@ -1,40 +1,30 @@
 "use client";
 
+import { Cpu, Database, RefreshCw, Zap } from "lucide-react";
 import * as React from "react";
 import {
-  Activity,
-  Cpu,
-  Database,
-  RefreshCw,
-  Clock,
-  Layers,
-  Zap,
-  Server,
-  TrendingUp,
-} from "lucide-react";
+  Area,
+  AreaChart,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import {
-  AreaChart,
-  Area,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { Switch } from "@/components/ui/switch";
 
 interface TelemetryResponse {
   status: string;
@@ -71,7 +61,7 @@ function formatBytes(bytes?: number): string {
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+  return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`;
 }
 
 function formatUptime(seconds?: number): string {
