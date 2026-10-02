@@ -1,12 +1,88 @@
 import type { NextConfig } from "next";
 
+const securityHeaders = [
+  {
+    key: "X-Frame-Options",
+    value: "DENY",
+  },
+  {
+    key: "X-Content-Type-Options",
+    value: "nosniff",
+  },
+  {
+    key: "Referrer-Policy",
+    value: "strict-origin-when-cross-origin",
+  },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
+  },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
+  },
+  {
+    key: "Content-Security-Policy",
+    value:
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https://api.irvanma.eu.org http://localhost:8080 https:;",
+  },
+];
+
 const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
   cacheComponents: true,
   partialPrefetching: true,
+  reactCompiler: true,
   outputFileTracingIncludes: {
     "/**": ["./src/proto/**/*"],
+  },
+  experimental: {
+    webpackMemoryOptimizations: true,
+    serverSourceMaps: false,
+    turbopackRustReactCompiler: true,
+  },
+  productionBrowserSourceMaps: false,
+  images: {
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+    ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: securityHeaders,
+      },
+    ];
+  },
+  async rewrites() {
+    const backendUrl =
+      process.env.API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.NODE_ENV === "development"
+        ? "http://localhost:8080"
+        : "https://api.irvanma.eu.org");
+    return [
+      {
+        source: "/health",
+        destination: `${backendUrl}/health`,
+      },
+      {
+        source: "/v1/health",
+        destination: `${backendUrl}/v1/health`,
+      },
+      {
+        source: "/v1/storage/:path*",
+        destination: `${backendUrl}/v1/storage/:path*`,
+      },
+    ];
   },
 };
 
