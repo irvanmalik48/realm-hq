@@ -1,22 +1,28 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
 import {
   Activity,
+  ArrowUpRight,
+  Cpu,
+  Database,
   HardDrive,
   Mail,
-  MessageSquare,
-  ShieldCheck,
-  Terminal,
-  Database,
-  Cpu,
   RefreshCw,
-  ArrowUpRight,
   TrendingDown,
-  Layers,
 } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -24,16 +30,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 
 interface TelemetryData {
   status: string;
@@ -76,7 +72,7 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  return `${(bytes / k ** i).toFixed(1)} ${sizes[i]}`;
 }
 
 function formatUptime(seconds: number): string {
