@@ -1,11 +1,11 @@
 "use client";
 
-import * as React from "react";
-import { usePathname } from "next/navigation";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Activity } from "lucide-react";
+import { usePathname } from "next/navigation";
+import * as React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": {
