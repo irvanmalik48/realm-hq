@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/app-sidebar";
-import { AppHeader } from "@/components/layout/app-header";
+import type * as React from "react";
 import { DirectionalTransition } from "@/components/directional-transition";
+import { AppHeader } from "@/components/layout/app-header";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
