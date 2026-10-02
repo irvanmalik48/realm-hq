@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import {
+  createMetadata,
   getCommentClient,
   promisifyUnary,
-  createMetadata,
 } from "@/lib/grpc/client";
 import { formatGrpcError } from "@/lib/grpc/errors";
 
