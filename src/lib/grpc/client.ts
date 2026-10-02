@@ -18,6 +18,12 @@ const protoOptions: protoLoader.Options = {
   enums: String,
   defaults: true,
   oneofs: true,
+  includeDirs: [
+    path.join(process.cwd(), "src", "proto"),
+    path.join(process.cwd(), "proto"),
+    path.resolve("./src/proto"),
+    getProtoDir(),
+  ],
 };
 
 function getProtoDir(): string {
