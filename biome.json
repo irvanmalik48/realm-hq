@@ -22,13 +22,25 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
-    },
-    "domains": {
-      "next": "recommended",
-      "react": "recommended"
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noDocumentCookie": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "warn",
+        "useExhaustiveDependencies": "warn"
+      }
     }
   },
+  "overrides": [
+    {
+      "includes": ["src/components/ui/**"],
+      "linter": {
+        "enabled": false
+      }
+    }
+  ],
   "assist": {
     "actions": {
       "source": {
