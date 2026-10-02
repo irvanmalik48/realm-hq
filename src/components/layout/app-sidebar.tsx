@@ -1,24 +1,25 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
+  Activity,
+  Command,
+  HardDrive,
+  Heart,
+  KeyRound,
   LayoutDashboard,
+  LogOut,
   Mail,
   MessageSquare,
-  Heart,
-  HardDrive,
-  KeyRound,
   ShieldAlert,
-  Activity,
-  Terminal,
-  LogOut,
-  Command,
   ShieldCheck,
+  Terminal,
   UserCheck,
 } from "lucide-react";
-import { useAuth } from "@/lib/auth/auth-context";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import * as React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -32,9 +33,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { ThemeToggleButton } from "@/components/ui/theme-toggle-button";
+import { useAuth } from "@/lib/auth/auth-context";
 
 const navItems = [
   {
