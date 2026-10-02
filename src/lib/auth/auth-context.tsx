@@ -1,13 +1,14 @@
 "use client";
 
-import React, {
+import { useRouter } from "next/navigation";
+import type React from "react";
+import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
-  useCallback,
 } from "react";
-import { useRouter } from "next/navigation";
 
 export interface User {
   id: string;
