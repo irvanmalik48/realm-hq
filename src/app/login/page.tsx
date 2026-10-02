@@ -1,20 +1,21 @@
 "use client";
 
-import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {
+  ArrowRight,
   Command,
-  ShieldAlert,
+  Loader2,
   Lock,
   Mail,
-  ArrowRight,
-  Loader2,
+  ShieldAlert,
 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import * as React from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth/auth-context";
+import * as z from "zod";
+import { DirectionalTransition } from "@/components/directional-transition";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -22,10 +23,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DirectionalTransition } from "@/components/directional-transition";
+import { useAuth } from "@/lib/auth/auth-context";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Username or email is required"),
