@@ -2,7 +2,6 @@
 
 import { Activity } from "lucide-react";
 import { usePathname } from "next/navigation";
-import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -10,7 +9,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": {
     title: "Command Centre",
-    subtitle: "System health and quick overview",
+    subtitle: "System health and overview",
   },
   "/messages": {
     title: "Contact Submissions",
@@ -22,27 +21,27 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   },
   "/reactions": {
     title: "Post Reactions",
-    subtitle: "Aggregate reactions across articles",
+    subtitle: "Overview of likes and reactions across articles",
   },
   "/storage": {
-    title: "Storage & S3 Explorer",
-    subtitle: "Zstd compressed assets and S3 bucket browser",
+    title: "File Storage",
+    subtitle: "Manage uploaded media, documents, and bucket assets",
   },
   "/tokens": {
-    title: "API Tokens",
-    subtitle: "Service keys and rate-limited tokens",
+    title: "API Keys",
+    subtitle: "Manage API keys and access tokens",
   },
   "/admins": {
-    title: "Admin Management & RBAC",
-    subtitle: "Superadmins and role-based permissions",
+    title: "Administrators",
+    subtitle: "Manage admin accounts, roles, and permissions",
   },
   "/telemetry": {
-    title: "Telemetrics & Go Runtime",
-    subtitle: "Live DB pool connection and memory statistics",
+    title: "System Performance",
+    subtitle: "Live database connections, server load, and memory usage",
   },
   "/logs": {
     title: "System Logs",
-    subtitle: "Real-time structured events with trace correlation",
+    subtitle: "Recent server events, warnings, and error logs",
   },
 };
 
@@ -78,7 +77,7 @@ export function AppHeader() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
           <Activity className="h-3 w-3" />
-          <span>gRPC Connected</span>
+          <span>System Online</span>
         </Badge>
       </div>
     </header>
