@@ -3,29 +3,42 @@ import { env } from "@/env";
 import {
   createMetadata,
   getAdminClient,
-  getAuthClient,
   promisifyUnary,
 } from "@/lib/grpc/client";
-import { formatGrpcError } from "@/lib/grpc/errors";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const authClient = getAuthClient();
-    const metadata = createMetadata();
+    const apiBase =
+      env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8080";
 
-    const authData = await promisifyUnary<
-      { identifier: string; password: string },
-      { token?: string; user?: { id: string; email: string; username: string } }
-    >(
-      authClient,
-      "Login",
-      {
+    const loginRes = await fetch(`${apiBase}/v1/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         identifier: body.identifier || "",
         password: body.password || "",
-      },
-      metadata,
-    );
+      }),
+    });
+
+    const authData = await loginRes.json();
+    if (!loginRes.ok) {
+      return NextResponse.json(
+        { error: authData.message || authData.error || "Invalid credentials" },
+        { status: loginRes.status || 401 },
+      );
+    }
+
+    // If Two-Factor Authentication is required, return challenge response immediately without session cookie
+    if (authData.two_factor_required) {
+      return NextResponse.json({
+        status: "2fa_required",
+        two_factor_required: true,
+        temp_token: authData.temp_token,
+      });
+    }
 
     const token = authData.token;
     const user = authData.user;
@@ -38,8 +51,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify whether this user is an authorized admin
-    const adminClient = getAdminClient();
-    const adminMeta = createMetadata({ token });
     let adminRecord: {
       id: string;
       is_superadmin: boolean;
@@ -47,6 +58,8 @@ export async function POST(req: NextRequest) {
     } | null = null;
 
     try {
+      const adminClient = getAdminClient();
+      const adminMeta = createMetadata({ token });
       const adminList = await promisifyUnary<
         Record<string, never>,
         {
@@ -68,7 +81,18 @@ export async function POST(req: NextRequest) {
         };
       }
     } catch {
-      // If listing admins fails, adminRecord remains null
+      // Fallback check against configured superadmin emails
+      const superadminEmails = (process.env.SUPERADMIN_EMAILS || "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      if (user.email && superadminEmails.includes(user.email.toLowerCase())) {
+        adminRecord = {
+          id: user.id,
+          is_superadmin: true,
+          permissions: ["*"],
+        };
+      }
     }
 
     // If user is not in admin_users, deny access to HQ Command Centre
@@ -99,7 +123,8 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error: unknown) {
-    const { message, status } = formatGrpcError(error);
-    return NextResponse.json({ error: message }, { status });
+    const message =
+      error instanceof Error ? error.message : "Authentication error occurred";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
