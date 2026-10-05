@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Activity,
   ArrowUpRight,
   Cpu,
   Database,
@@ -67,6 +66,19 @@ interface RecentLog {
   component?: string;
 }
 
+interface AnalyticsTrendPoint {
+  date: string;
+  views: number;
+  unique: number;
+}
+
+interface AnalyticsStats {
+  total_views: number;
+  unique_visitors: number;
+  views_trend?: AnalyticsTrendPoint[];
+  trend?: Array<{ bucket: string; views: number; visitors: number }>;
+}
+
 function formatBytes(bytes?: number | string | null): string {
   if (bytes === undefined || bytes === null) return "0 B";
   const num = typeof bytes === "string" ? Number(bytes) : bytes;
@@ -97,7 +109,8 @@ export default function DashboardPage() {
   const [recentLogs, setRecentLogs] = React.useState<RecentLog[]>([]);
   const [messagesCount, setMessagesCount] = React.useState<number>(0);
   const [commentsCount, setCommentsCount] = React.useState<number>(0);
-  const [loading, setLoading] = React.useState(true);
+  const [analyticsStats, setAnalyticsStats] =
+    React.useState<AnalyticsStats | null>(null);
   const [refreshing, setRefreshing] = React.useState(false);
 
   const fetchData = React.useCallback(async () => {
@@ -108,13 +121,14 @@ export default function DashboardPage() {
         return res.json();
       };
 
-      const [telRes, storRes, logsRes, msgRes, commRes] =
+      const [telRes, storRes, logsRes, msgRes, commRes, analyticsRes] =
         await Promise.allSettled([
           fetchJson("/api/telemetry"),
           fetchJson("/api/storage?type=stats"),
           fetchJson("/api/logs?limit=5"),
           fetchJson("/api/contact?limit=1"),
           fetchJson("/api/comments?limit=1"),
+          fetchJson("/api/analytics?period=24h"),
         ]);
 
       if (telRes.status === "fulfilled" && !telRes.value.error) {
@@ -138,8 +152,10 @@ export default function DashboardPage() {
       ) {
         setCommentsCount(commRes.value.total);
       }
+      if (analyticsRes.status === "fulfilled" && !analyticsRes.value.error) {
+        setAnalyticsStats(analyticsRes.value);
+      }
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   }, []);
@@ -155,38 +171,19 @@ export default function DashboardPage() {
     fetchData();
   };
 
-  // Mock telemetry data trend for live visual
-  const mockHeapTrend = [
-    {
-      time: "5m ago",
-      alloc:
-        ((telemetry?.runtime?.alloc_bytes || 15000000) / 1024 / 1024) * 0.92,
-    },
-    {
-      time: "4m ago",
-      alloc:
-        ((telemetry?.runtime?.alloc_bytes || 15000000) / 1024 / 1024) * 0.96,
-    },
-    {
-      time: "3m ago",
-      alloc:
-        ((telemetry?.runtime?.alloc_bytes || 15000000) / 1024 / 1024) * 0.94,
-    },
-    {
-      time: "2m ago",
-      alloc:
-        ((telemetry?.runtime?.alloc_bytes || 15000000) / 1024 / 1024) * 1.02,
-    },
-    {
-      time: "1m ago",
-      alloc:
-        ((telemetry?.runtime?.alloc_bytes || 15000000) / 1024 / 1024) * 0.98,
-    },
-    {
-      time: "now",
-      alloc: (telemetry?.runtime?.alloc_bytes || 15000000) / 1024 / 1024,
-    },
-  ];
+  const trafficTrend = React.useMemo(() => {
+    if (analyticsStats?.views_trend && analyticsStats.views_trend.length > 0) {
+      return analyticsStats.views_trend.map((pt) => ({
+        bucket: pt.date.length > 10 ? pt.date.slice(11) : pt.date,
+        views: pt.views,
+        visitors: pt.unique,
+      }));
+    }
+    if (analyticsStats?.trend && analyticsStats.trend.length > 0) {
+      return analyticsStats.trend;
+    }
+    return [];
+  }, [analyticsStats]);
 
   return (
     <DashboardShell>
@@ -392,88 +389,127 @@ export default function DashboardPage() {
 
         {/* Charts & Live Feed Section */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Memory Usage Chart */}
+          {/* Web Traffic Chart */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-sm font-semibold">
-                    Memory Usage (MB)
-                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-sm font-semibold">
+                      Visitor Traffic (24h)
+                    </CardTitle>
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      {analyticsStats?.total_views ?? 0} views •{" "}
+                      {analyticsStats?.unique_visitors ?? 0} visitors
+                    </Badge>
+                  </div>
                   <CardDescription className="text-xs">
-                    Memory usage over the last 5 minutes
+                    Live page views and unique visitors across all managed sites
                   </CardDescription>
                 </div>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] gap-1 font-mono"
+                <Link
+                  href="/analytics"
+                  className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
                 >
-                  <Activity className="h-3 w-3 text-primary animate-pulse" />
-                  Live
-                </Badge>
+                  Analytics <ArrowUpRight className="h-3 w-3" />
+                </Link>
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-[220px] w-full pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={mockHeapTrend}
-                    margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="allocGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="var(--color-primary)"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="var(--color-primary)"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="time"
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                      tickFormatter={(val) => `${val.toFixed(1)}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--color-card)",
-                        borderColor: "var(--color-border)",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                      formatter={(val: any) => [
-                        `${Number(val).toFixed(2)} MB`,
-                        "Memory",
-                      ]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="alloc"
-                      stroke="var(--color-primary)"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#allocGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {trafficTrend.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-xs text-muted-foreground gap-1">
+                    <span>No traffic recorded in the last 24 hours.</span>
+                    <span className="text-[11px] opacity-70">
+                      Page views from realm-reference will appear here in real
+                      time.
+                    </span>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={trafficTrend}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="trafficViewsGrad"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="var(--color-primary)"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="var(--color-primary)"
+                            stopOpacity={0.0}
+                          />
+                        </linearGradient>
+                        <linearGradient
+                          id="trafficVisGrad"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="bucket"
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        allowDecimals={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--color-card)",
+                          borderColor: "var(--color-border)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        name="Page Views"
+                        dataKey="views"
+                        stroke="var(--color-primary)"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#trafficViewsGrad)"
+                      />
+                      <Area
+                        type="monotone"
+                        name="Unique Visitors"
+                        dataKey="visitors"
+                        stroke="#3b82f6"
+                        strokeWidth={1.5}
+                        fillOpacity={1}
+                        fill="url(#trafficVisGrad)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </CardContent>
           </Card>
