@@ -52,6 +52,22 @@ import {
 } from "@/lib/api/posts";
 
 export default function EditPostPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <DashboardShell>
+          <div className="flex h-[50vh] items-center justify-center">
+            <Skeleton className="h-48 w-full max-w-xl rounded-xl" />
+          </div>
+        </DashboardShell>
+      }
+    >
+      <EditPostContent />
+    </React.Suspense>
+  );
+}
+
+function EditPostContent() {
   const params = useParams();
   const router = useRouter();
   const slugParam = params.slug as string;
