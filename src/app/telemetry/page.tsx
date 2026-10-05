@@ -128,11 +128,11 @@ export default function TelemetryPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-foreground">
-              Telemetrics &amp; Engine Runtime
+              System Performance &amp; Health
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Low-overhead real-time metrics for Go 1.26 runtime, GC cycles, and
-              PostgreSQL connection pool.
+              Real-time server resource usage, active database connections, and
+              memory allocation.
             </p>
           </div>
 
@@ -174,7 +174,7 @@ export default function TelemetryPage() {
           <Card className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                Go Goroutines
+                Active Workers
               </span>
               <Cpu className="h-4 w-4 text-blue-500" />
             </div>
@@ -183,7 +183,7 @@ export default function TelemetryPage() {
                 {data?.runtime?.goroutines ?? 0}
               </div>
               <span className="text-[11px] text-muted-foreground mt-1 block">
-                Concurrent execution threads
+                Concurrent background tasks
               </span>
             </div>
           </Card>
@@ -191,7 +191,7 @@ export default function TelemetryPage() {
           <Card className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                Heap Allocation
+                Active Memory
               </span>
               <Zap className="h-4 w-4 text-amber-500" />
             </div>
@@ -200,7 +200,7 @@ export default function TelemetryPage() {
                 {formatBytes(data?.runtime?.alloc_bytes)}
               </div>
               <span className="text-[11px] text-muted-foreground mt-1 block">
-                Sys Total: {formatBytes(data?.runtime?.sys_bytes)}
+                Reserved: {formatBytes(data?.runtime?.sys_bytes)}
               </span>
             </div>
           </Card>
@@ -208,7 +208,7 @@ export default function TelemetryPage() {
           <Card className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                GC Invocations
+                Memory Cleanups
               </span>
               <RefreshCw className="h-4 w-4 text-emerald-500" />
             </div>
@@ -217,7 +217,7 @@ export default function TelemetryPage() {
                 {data?.runtime?.gc_cycles ?? 0}
               </div>
               <span className="text-[11px] text-muted-foreground mt-1 block">
-                Cumulative collections
+                Total garbage collection cycles
               </span>
             </div>
           </Card>
@@ -225,7 +225,7 @@ export default function TelemetryPage() {
           <Card className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                DB Connection Pool
+                Database Connections
               </span>
               <Database className="h-4 w-4 text-violet-500" />
             </div>
@@ -235,7 +235,7 @@ export default function TelemetryPage() {
                 {data?.db_pool?.max_conns ?? 10}
               </div>
               <span className="text-[11px] text-muted-foreground mt-1 block">
-                {data?.db_pool?.idle_conns ?? 0} idle connections
+                {data?.db_pool?.idle_conns ?? 0} idle connections ready
               </span>
             </div>
           </Card>
@@ -243,16 +243,16 @@ export default function TelemetryPage() {
 
         {/* Charts Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Memory Heap Chart */}
+          {/* Memory Usage Chart */}
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-sm font-semibold">
-                    Heap Memory (MB)
+                    Memory Usage (MB)
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Allocated memory profile across samples
+                    Active memory usage recorded over time
                   </CardDescription>
                 </div>
                 <Badge variant="outline" className="font-mono text-[10px]">
@@ -308,7 +308,7 @@ export default function TelemetryPage() {
                       }}
                       formatter={(val: any) => [
                         `${Number(val).toFixed(2)} MB`,
-                        "Heap Alloc",
+                        "Memory",
                       ]}
                     />
                     <Area
@@ -325,26 +325,27 @@ export default function TelemetryPage() {
             </CardContent>
           </Card>
 
-          {/* Goroutines & Connection Pool Chart */}
+          {/* Workers & Connection Pool Chart */}
           <Card>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-sm font-semibold">
-                    Goroutines &amp; DB Conns
+                    Active Workers &amp; DB Connections
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Concurrent runtime workers and database connections
+                    Concurrent background workers and active database
+                    connections
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <span className="h-2 w-2 rounded-full bg-violet-500" />
-                    Goroutines
+                    Workers
                   </div>
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    DB Conns
+                    DB Connections
                   </div>
                 </div>
               </div>
