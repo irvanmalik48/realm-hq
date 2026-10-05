@@ -1,7 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import fs from "fs";
-import path from "path";
 import { env } from "@/env";
 
 export function getGrpcTarget(): string {
