@@ -1466,9 +1466,9 @@ function CommentsContent() {
                     <div className="px-4 py-3 border-t border-border/50 bg-muted/20 flex items-center justify-between">
                       {/* Authors avatars cluster */}
                       <div className="flex items-center -space-x-1.5 overflow-hidden">
-                        {group.authors.slice(0, 4).map((a, i) => (
+                        {group.authors.slice(0, 4).map((a) => (
                           <Avatar
-                            key={`${a.username}-${i}`}
+                            key={a.username || a.name}
                             className="h-6 w-6 border-2 border-background ring-1 ring-border text-[9px]"
                           >
                             <AvatarImage src={a.avatarUrl || ""} alt={a.name} />
