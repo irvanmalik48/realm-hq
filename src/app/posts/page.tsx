@@ -167,7 +167,7 @@ export default function PostsPage() {
 
       // Tag filter
       if (tagFilter !== "all") {
-        if (!post.tags || !post.tags.includes(tagFilter)) return false;
+        if (!post.tags?.includes(tagFilter)) return false;
       }
 
       return true;
