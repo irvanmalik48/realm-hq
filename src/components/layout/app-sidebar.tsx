@@ -2,6 +2,7 @@
 
 import {
   Activity,
+  BarChart3,
   Command,
   FileText,
   HardDrive,
@@ -66,6 +67,11 @@ const navItems = [
     title: "Post Reactions",
     href: "/reactions",
     icon: Heart,
+  },
+  {
+    title: "Analytics",
+    href: "/analytics",
+    icon: BarChart3,
   },
   {
     title: "File Storage",
