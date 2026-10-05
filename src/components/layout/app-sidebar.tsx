@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TwoFactorDialog } from "@/components/auth/two-factor-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -243,6 +244,40 @@ export function AppSidebar() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-1.5 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:items-center">
+            <TwoFactorDialog
+              trigger={
+                <div>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          type="button"
+                          aria-label="Two-Factor Authentication Security"
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors cursor-pointer relative"
+                        >
+                          <ShieldCheck
+                            className={`h-4 w-4 ${user?.two_factor_enabled ? "text-emerald-500" : ""}`}
+                          />
+                          {user?.two_factor_enabled && (
+                            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          )}
+                        </button>
+                      }
+                    />
+                    <TooltipContent
+                      side="right"
+                      align="center"
+                      hidden={state !== "collapsed" || isMobile}
+                    >
+                      {user?.two_factor_enabled
+                        ? "2FA Active (Protected)"
+                        : "Configure 2FA"}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              }
+            />
+
             <Tooltip>
               <TooltipTrigger
                 render={
