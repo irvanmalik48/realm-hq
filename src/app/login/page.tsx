@@ -2,12 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ArrowLeft,
   ArrowRight,
   Command,
+  KeyRound,
   Loader2,
   Lock,
   Mail,
   ShieldAlert,
+  ShieldCheck,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -24,6 +27,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -37,8 +45,16 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, verify2FA } = useAuth();
   const [submitting, setSubmitting] = React.useState(false);
+
+  // 2FA Challenge state
+  const [twoFactorToken, setTwoFactorToken] = React.useState<string | null>(
+    null,
+  );
+  const [otpCode, setOtpCode] = React.useState("");
+  const [useRecoveryCode, setUseRecoveryCode] = React.useState(false);
+  const [recoveryCode, setRecoveryCode] = React.useState("");
 
   const {
     register,
@@ -64,6 +80,15 @@ function LoginForm() {
         return;
       }
 
+      if (res.twoFactorRequired && res.tempToken) {
+        setTwoFactorToken(res.tempToken);
+        toast.info("Two-Factor Authentication Required", {
+          description:
+            "Please enter the verification code from your authenticator app.",
+        });
+        return;
+      }
+
       toast.success("Command Centre Authorized", {
         description: "Welcome back, Administrator.",
       });
@@ -79,6 +104,197 @@ function LoginForm() {
       setSubmitting(false);
     }
   };
+
+  const onVerify2FA = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactorToken) return;
+
+    const codeToVerify = useRecoveryCode ? recoveryCode.trim() : otpCode.trim();
+
+    if (!codeToVerify) {
+      toast.error("Code Required", {
+        description: useRecoveryCode
+          ? "Please enter your emergency recovery code."
+          : "Please enter your 6-digit authentication code.",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await verify2FA({
+        tempToken: twoFactorToken,
+        code: codeToVerify,
+      });
+
+      if (!res.success) {
+        toast.error("Verification Failed", {
+          description:
+            res.error || "Invalid verification code. Please try again.",
+        });
+        return;
+      }
+
+      toast.success("Command Centre Authorized", {
+        description: "Two-factor verification confirmed. Welcome back!",
+      });
+
+      const destination = searchParams.get("from") || "/";
+      router.push(destination);
+    } catch {
+      toast.error("Error", {
+        description: "Unexpected error during 2FA verification.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (twoFactorToken) {
+    return (
+      <Card className="border-border/80 shadow-2xl backdrop-blur-xl bg-card/90">
+        <CardHeader className="space-y-1 pb-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ShieldCheck className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">
+                Two-Factor Authentication
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {useRecoveryCode
+                  ? "Enter one of your 8 emergency backup recovery codes."
+                  : "Enter the 6-digit code from your authenticator app."}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onVerify2FA} className="space-y-5">
+            {!useRecoveryCode ? (
+              <div className="flex flex-col items-center justify-center space-y-3 py-2">
+                <Label
+                  htmlFor="otp-input"
+                  className="text-xs text-muted-foreground"
+                >
+                  Security Passcode
+                </Label>
+                <InputOTP
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={setOtpCode}
+                  disabled={submitting}
+                  autoFocus
+                >
+                  <InputOTPGroup className="gap-1.5">
+                    <InputOTPSlot
+                      index={0}
+                      className="h-11 w-11 text-base font-semibold"
+                    />
+                    <InputOTPSlot
+                      index={1}
+                      className="h-11 w-11 text-base font-semibold"
+                    />
+                    <InputOTPSlot
+                      index={2}
+                      className="h-11 w-11 text-base font-semibold"
+                    />
+                    <InputOTPSlot
+                      index={3}
+                      className="h-11 w-11 text-base font-semibold"
+                    />
+                    <InputOTPSlot
+                      index={4}
+                      className="h-11 w-11 text-base font-semibold"
+                    />
+                    <InputOTPSlot
+                      index={5}
+                      className="h-11 w-11 text-base font-semibold"
+                    />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+            ) : (
+              <div className="space-y-2 py-1">
+                <Label htmlFor="recovery-code" className="text-xs font-medium">
+                  Emergency Recovery Code
+                </Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="recovery-code"
+                    placeholder="ABCD-EF12"
+                    value={recoveryCode}
+                    onChange={(e) =>
+                      setRecoveryCode(e.target.value.toUpperCase())
+                    }
+                    className="pl-9 font-mono uppercase tracking-wider text-sm"
+                    disabled={submitting}
+                    autoFocus
+                  />
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Backup codes can each be used once in emergency scenarios.
+                </p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full font-medium cursor-pointer"
+              disabled={
+                submitting ||
+                (!useRecoveryCode && otpCode.length !== 6) ||
+                (useRecoveryCode && !recoveryCode.trim())
+              }
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                <>
+                  Verify &amp; Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+
+            <div className="flex flex-col gap-2 pt-1 border-t border-border/60">
+              <button
+                type="button"
+                onClick={() => {
+                  setUseRecoveryCode(!useRecoveryCode);
+                  setOtpCode("");
+                  setRecoveryCode("");
+                }}
+                className="text-xs text-primary hover:underline cursor-pointer text-center"
+              >
+                {useRecoveryCode
+                  ? "Use 6-digit Authenticator code instead"
+                  : "Can't access your authenticator? Use a recovery code"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTwoFactorToken(null);
+                  setOtpCode("");
+                  setRecoveryCode("");
+                }}
+                className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to sign in
+              </button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-border/80 shadow-2xl backdrop-blur-xl bg-card/90">
