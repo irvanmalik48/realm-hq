@@ -78,7 +78,7 @@ function formatUptime(seconds?: number): string {
 export default function TelemetryPage() {
   const [data, setData] = React.useState<TelemetryResponse | null>(null);
   const [history, setHistory] = React.useState<MetricPoint[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [_loading, setLoading] = React.useState(true);
   const [autoRefresh, setAutoRefresh] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
 
