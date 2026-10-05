@@ -190,7 +190,7 @@ export default function LoginPage() {
 
           <div className="mt-8 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
             <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground" />
-            <span>Dual-engine S3 storage &amp; gRPC protected endpoint</span>
+            <span>Encrypted storage &amp; secure administrative access</span>
           </div>
         </div>
       </div>
