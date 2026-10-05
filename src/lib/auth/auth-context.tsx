@@ -16,6 +16,7 @@ export interface User {
   username: string;
   full_name: string;
   avatar_url?: string | null;
+  two_factor_enabled?: boolean;
 }
 
 export interface AdminRole {
@@ -28,9 +29,15 @@ export interface AuthContextType {
   user: User | null;
   admin: AdminRole | null;
   isLoading: boolean;
-  login: (credentials: {
-    identifier: string;
-    password: string;
+  login: (credentials: { identifier: string; password: string }) => Promise<{
+    success: boolean;
+    twoFactorRequired?: boolean;
+    tempToken?: string;
+    error?: string;
+  }>;
+  verify2FA: (data: {
+    tempToken: string;
+    code: string;
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -84,8 +91,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.error || "Login failed" };
       }
 
+      if (data.two_factor_required) {
+        return {
+          success: true,
+          twoFactorRequired: true,
+          tempToken: data.temp_token,
+        };
+      }
+
       setUser(data.user);
       setAdmin(data.admin);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Network error";
+      return { success: false, error: message };
+    }
+  };
+
+  const verify2FA = async (data: { tempToken: string; code: string }) => {
+    try {
+      const res = await fetch("/api/auth/2fa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        return {
+          success: false,
+          error: resData.error || "Verification failed",
+        };
+      }
+
+      setUser(resData.user);
+      setAdmin(resData.admin);
       return { success: true };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Network error";
@@ -116,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         admin,
         isLoading,
         login,
+        verify2FA,
         logout,
         refresh,
         hasPermission,
