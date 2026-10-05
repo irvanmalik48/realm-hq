@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
   title: "Realm HQ — Command Centre",
   description:
-    "Unified command centre for Realm infrastructure, telemetrics, logs, and administration.",
+    "Unified management dashboard for Realm system performance, storage, logs, and administration.",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
