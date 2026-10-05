@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+import { TwoFactorDialog } from "@/components/auth/two-factor-dialog";
 import {
   DataTableBulkActions,
   DataTableColumnHeader,
@@ -109,7 +110,7 @@ const AVAILABLE_PERMISSIONS = [
 ];
 
 function AdminsContent() {
-  const { admin: currentAdmin } = useAuth();
+  const { user, admin: currentAdmin } = useAuth();
   const [admins, setAdmins] = React.useState<AdminUserRecord[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [sorting, setSorting] = React.useState<SortingState>([
@@ -611,6 +612,20 @@ function AdminsContent() {
         </div>
 
         <div className="flex items-center gap-2">
+          <TwoFactorDialog
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs cursor-pointer"
+              >
+                <ShieldCheck
+                  className={`h-3.5 w-3.5 ${user?.two_factor_enabled ? "text-emerald-500" : ""}`}
+                />
+                {user?.two_factor_enabled ? "2FA Active" : "Setup 2FA"}
+              </Button>
+            }
+          />
           <Button
             variant="outline"
             size="sm"
