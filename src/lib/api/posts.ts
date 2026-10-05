@@ -126,7 +126,9 @@ export async function createPost(
     throw new Error(`Failed to create post: ${errText || res.statusText}`);
   }
 
-  return res.json();
+  const post: PostDetail = await res.json();
+  triggerRevalidation(post.slug);
+  return post;
 }
 
 export async function updatePost(
@@ -150,7 +152,9 @@ export async function updatePost(
     throw new Error(`Failed to update post: ${errText || res.statusText}`);
   }
 
-  return res.json();
+  const post: PostDetail = await res.json();
+  triggerRevalidation(post.slug);
+  return post;
 }
 
 export async function deletePost(slug: string): Promise<void> {
@@ -165,5 +169,19 @@ export async function deletePost(slug: string): Promise<void> {
   if (!res.ok) {
     const errText = await res.text();
     throw new Error(`Failed to delete post: ${errText || res.statusText}`);
+  }
+
+  triggerRevalidation(slug);
+}
+
+export async function triggerRevalidation(slug?: string): Promise<void> {
+  try {
+    await fetch("/api/posts/revalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug }),
+    });
+  } catch (err) {
+    console.warn("Revalidation webhook call failed:", err);
   }
 }
