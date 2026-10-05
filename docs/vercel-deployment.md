@@ -17,6 +17,7 @@ In your **Vercel Project Settings** &rarr; **Environment Variables**, configure 
 | `GRPC_API_URL` | `api.irvanma.eu.org:443` | Secure gRPC endpoint (SSL/TLS enabled) |
 | `API_TOKEN` | `realm_tok_...` | Admin service token generated via `realm-api` |
 | `SUPERADMIN_EMAILS` | `irvanma@gnuweeb.org` | Comma-separated superadmin emails |
+| `REVALIDATION_SECRET` | *(random 32-byte hex)* | Shared secret between HQ and blog for instant cache purges |
 | `NODE_ENV` | `production` | Node production mode |
 
 > [!NOTE]
