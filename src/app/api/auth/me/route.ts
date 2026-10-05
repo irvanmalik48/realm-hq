@@ -3,7 +3,6 @@ import { env } from "@/env";
 import {
   createMetadata,
   getAdminClient,
-  getAuthClient,
   promisifyUnary,
 } from "@/lib/grpc/client";
 
@@ -17,67 +16,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ user: null, admin: null });
     }
 
-    const authClient = getAuthClient();
-    const metadata = createMetadata({ token });
+    const apiBase =
+      env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8080";
 
-    try {
-      const data = await promisifyUnary<
-        Record<string, never>,
-        {
-          user?: {
-            id: string;
-            email: string;
-            username: string;
-            full_name: string;
-            avatar_url?: string;
-          };
-        }
-      >(authClient, "GetProfile", {}, metadata);
+    const meRes = await fetch(`${apiBase}/v1/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
 
-      if (!data.user) {
-        return NextResponse.json({ user: null, admin: null });
-      }
-
-      // Check admin status
-      const adminClient = getAdminClient();
-      let adminRecord: {
-        id: string;
-        is_superadmin: boolean;
-        permissions: string[];
-      } | null = null;
-      try {
-        const adminList = await promisifyUnary<
-          Record<string, never>,
-          {
-            admins?: Array<{
-              id: string;
-              user?: { id: string };
-              is_superadmin: boolean;
-              permissions: string[];
-            }>;
-          }
-        >(adminClient, "ListAdmins", {}, metadata);
-
-        const match = adminList.admins?.find(
-          (a) => a.user?.id === data.user?.id,
-        );
-        if (match) {
-          adminRecord = {
-            id: match.id,
-            is_superadmin: match.is_superadmin,
-            permissions: match.permissions || [],
-          };
-        }
-      } catch {
-        // Ignored if unprivileged
-      }
-
-      return NextResponse.json({
-        status: "success",
-        user: data.user,
-        admin: adminRecord,
-      });
-    } catch {
+    if (!meRes.ok) {
       const res = NextResponse.json({ user: null, admin: null });
       res.cookies.set("realm_auth_token", "", {
         httpOnly: true,
@@ -88,6 +40,63 @@ export async function GET(req: NextRequest) {
       });
       return res;
     }
+
+    const data = await meRes.json();
+    const user = data.user;
+
+    if (!user) {
+      return NextResponse.json({ user: null, admin: null });
+    }
+
+    // Check admin status
+    let adminRecord: {
+      id: string;
+      is_superadmin: boolean;
+      permissions: string[];
+    } | null = null;
+
+    try {
+      const adminClient = getAdminClient();
+      const metadata = createMetadata({ token });
+      const adminList = await promisifyUnary<
+        Record<string, never>,
+        {
+          admins?: Array<{
+            id: string;
+            user?: { id: string };
+            is_superadmin: boolean;
+            permissions: string[];
+          }>;
+        }
+      >(adminClient, "ListAdmins", {}, metadata);
+
+      const match = adminList.admins?.find((a) => a.user?.id === user.id);
+      if (match) {
+        adminRecord = {
+          id: match.id,
+          is_superadmin: match.is_superadmin,
+          permissions: match.permissions || [],
+        };
+      }
+    } catch {
+      const superadminEmails = (process.env.SUPERADMIN_EMAILS || "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      if (user.email && superadminEmails.includes(user.email.toLowerCase())) {
+        adminRecord = {
+          id: user.id,
+          is_superadmin: true,
+          permissions: ["*"],
+        };
+      }
+    }
+
+    return NextResponse.json({
+      status: "success",
+      user,
+      admin: adminRecord,
+    });
   } catch {
     return NextResponse.json({ user: null, admin: null });
   }
