@@ -3,6 +3,7 @@
 import {
   Activity,
   Command,
+  FileText,
   HardDrive,
   Heart,
   KeyRound,
@@ -45,6 +46,11 @@ const navItems = [
     title: "Overview",
     href: "/",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Posts",
+    href: "/posts",
+    icon: FileText,
   },
   {
     title: "Submissions",
