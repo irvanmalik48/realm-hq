@@ -10,14 +10,12 @@ import {
   LogOut,
   Mail,
   MessageSquare,
-  ShieldAlert,
   ShieldCheck,
   Terminal,
   UserCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,8 +30,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { ThemeToggleButton } from "@/components/ui/theme-toggle-button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth/auth-context";
 
 const navItems = [
@@ -58,23 +62,23 @@ const navItems = [
     icon: Heart,
   },
   {
-    title: "Storage & S3",
+    title: "File Storage",
     href: "/storage",
     icon: HardDrive,
   },
   {
-    title: "API Tokens",
+    title: "API Keys",
     href: "/tokens",
     icon: KeyRound,
   },
   {
-    title: "Admin RBAC",
+    title: "Administrators",
     href: "/admins",
-    icon: ShieldAlert,
+    icon: ShieldCheck,
     superadminOnly: true,
   },
   {
-    title: "Telemetrics",
+    title: "Performance",
     href: "/telemetry",
     icon: Activity,
   },
@@ -88,6 +92,7 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, admin, logout } = useAuth();
+  const { state, isMobile } = useSidebar();
 
   const filteredItems = navItems.filter((item) => {
     if (item.superadminOnly && !admin?.is_superadmin) {
@@ -98,13 +103,30 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Command className="h-5 w-5" />
-          </div>
+      <SidebarHeader className="h-16 border-b border-sidebar-border px-3 group-data-[collapsible=icon]:px-0 flex flex-col justify-center">
+        <div className="flex items-center gap-3 px-1 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Link
+                  href="/"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-opacity"
+                >
+                  <Command className="h-4 w-4" />
+                </Link>
+              }
+            />
+            <TooltipContent
+              side="right"
+              align="center"
+              hidden={state !== "collapsed" || isMobile}
+            >
+              Realm HQ
+            </TooltipContent>
+          </Tooltip>
+
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <span className="font-semibold text-sm tracking-tight text-sidebar-foreground">
+            <span className="font-semibold text-sm tracking-tight text-sidebar-foreground truncate">
               Realm HQ
             </span>
             <span className="text-xs text-muted-foreground truncate">
@@ -114,11 +136,13 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+      <SidebarContent className="no-scrollbar">
+        <SidebarGroup className="p-2 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pt-3">
+          <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-[11px] font-medium tracking-wider uppercase text-muted-foreground/80 px-2 mb-1">
+            Management
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
               {filteredItems.map((item) => {
                 const isActive =
                   item.href === "/"
@@ -144,15 +168,40 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-3">
-        <div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
-          <div className="flex items-center gap-2 overflow-hidden">
-            <Avatar className="h-8 w-8 rounded-lg">
-              <AvatarImage src={user?.avatar_url || ""} alt={user?.username} />
-              <AvatarFallback className="rounded-lg text-xs bg-muted">
-                {user?.username?.slice(0, 2).toUpperCase() || "HQ"}
-              </AvatarFallback>
-            </Avatar>
+      <SidebarFooter className="border-t border-sidebar-border p-2 group-data-[collapsible=icon]:p-2">
+        <div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 w-full">
+          {/* User profile / Avatar */}
+          <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Avatar className="h-8 w-8 rounded-lg shrink-0 cursor-default ring-1 ring-border/50">
+                    <AvatarImage
+                      src={user?.avatar_url || ""}
+                      alt={user?.username}
+                    />
+                    <AvatarFallback className="rounded-lg text-xs font-medium bg-muted text-muted-foreground">
+                      {user?.username?.slice(0, 2).toUpperCase() || "HQ"}
+                    </AvatarFallback>
+                  </Avatar>
+                }
+              />
+              <TooltipContent
+                side="right"
+                align="center"
+                hidden={state !== "collapsed" || isMobile}
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium text-xs">
+                    {user?.full_name || user?.username || "Admin"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {admin?.is_superadmin ? "Superadmin" : "Staff"}
+                  </span>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+
             <div className="flex flex-col overflow-hidden text-left group-data-[collapsible=icon]:hidden">
               <span className="text-xs font-medium truncate text-sidebar-foreground">
                 {user?.full_name || user?.username || "Admin"}
@@ -177,16 +226,49 @@ export function AppSidebar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            <ThemeToggleButton />
-            <button
-              type="button"
-              onClick={logout}
-              title="Sign out"
-              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+          {/* Divider in collapsed mode */}
+          <div className="hidden group-data-[collapsible=icon]:block w-6 h-px bg-sidebar-border my-0.5" />
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-1.5 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:items-center">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <div>
+                    <ThemeToggleButton />
+                  </div>
+                }
+              />
+              <TooltipContent
+                side="right"
+                align="center"
+                hidden={state !== "collapsed" || isMobile}
+              >
+                Toggle Theme
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    onClick={logout}
+                    aria-label="Sign out"
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                }
+              />
+              <TooltipContent
+                side="right"
+                align="center"
+                hidden={state !== "collapsed" || isMobile}
+              >
+                Sign out
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </SidebarFooter>
