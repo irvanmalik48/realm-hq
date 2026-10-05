@@ -75,12 +75,21 @@ export async function POST(req: NextRequest) {
           permissions: match.permissions || [],
         };
       }
-    } catch {
-      // Fallback check against configured superadmin emails
-      const superadminEmails = (process.env.SUPERADMIN_EMAILS || "")
+    } catch (err) {
+      console.warn("gRPC ListAdmins check skipped:", err);
+    }
+
+    // Fallback check against configured superadmin emails
+    if (!adminRecord) {
+      const superadminEmails = (
+        env.SUPERADMIN_EMAILS ||
+        process.env.SUPERADMIN_EMAILS ||
+        ""
+      )
         .split(",")
         .map((e) => e.trim().toLowerCase())
         .filter(Boolean);
+
       if (user.email && superadminEmails.includes(user.email.toLowerCase())) {
         adminRecord = {
           id: user.id,
