@@ -9,6 +9,7 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     SUPERADMIN_EMAILS: z.string().optional(),
+    REVALIDATION_SECRET: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_SITE_NAME: z.string().default("Realm HQ"),
