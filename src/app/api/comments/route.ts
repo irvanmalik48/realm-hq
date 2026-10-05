@@ -37,6 +37,32 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function POST(req: NextRequest) {
+  try {
+    const token = req.cookies.get("realm_auth_token")?.value;
+    const body = await req.json();
+
+    const client = getCommentClient();
+    const metadata = createMetadata({ token });
+
+    const data = await promisifyUnary(
+      client,
+      "CreateComment",
+      {
+        slug: body.slug || body.post_slug,
+        content: body.content,
+        parent_id: body.parent_id || undefined,
+      },
+      metadata,
+    );
+
+    return NextResponse.json(data);
+  } catch (err) {
+    const { message, status } = formatGrpcError(err);
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
 export async function PUT(req: NextRequest) {
   try {
     const token = req.cookies.get("realm_auth_token")?.value;
