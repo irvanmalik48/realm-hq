@@ -67,12 +67,16 @@ interface RecentLog {
   component?: string;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+function formatBytes(bytes?: number | string | null): string {
+  if (bytes === undefined || bytes === null) return "0 B";
+  const num = typeof bytes === "string" ? Number(bytes) : bytes;
+  if (Number.isNaN(num) || num <= 0) return "0 B";
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / k ** i).toFixed(1)} ${sizes[i]}`;
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const i = Math.floor(Math.log(num) / Math.log(k));
+  if (i < 0) return "0 B";
+  const sizeIdx = Math.min(i, sizes.length - 1);
+  return `${(num / k ** sizeIdx).toFixed(sizeIdx === 0 ? 0 : 1)} ${sizes[sizeIdx]}`;
 }
 
 function formatUptime(seconds: number): string {
@@ -194,8 +198,7 @@ export default function DashboardPage() {
               Command Centre
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Live status, runtime telemetrics, dual-engine storage, and
-              management.
+              Live system status, storage overview, and recent activity.
             </p>
           </div>
 
@@ -221,7 +224,7 @@ export default function DashboardPage() {
           <Card className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                Storage Engine
+                Storage
               </span>
               <HardDrive className="h-4 w-4 text-primary" />
             </div>
@@ -238,8 +241,8 @@ export default function DashboardPage() {
                   className="text-[10px] uppercase font-mono px-1.5 py-0"
                 >
                   {storageStats?.active_backend === "s3"
-                    ? "AWS S3"
-                    : "Local Zstd"}
+                    ? "Cloud S3"
+                    : "Local Disk"}
                 </Badge>
                 {storageStats?.average_savings_percent ? (
                   <span className="text-[11px] text-emerald-500 font-medium flex items-center">
@@ -266,7 +269,7 @@ export default function DashboardPage() {
           <Card className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                DB Connection Pool
+                Database Connections
               </span>
               <Database className="h-4 w-4 text-emerald-500" />
             </div>
@@ -276,7 +279,7 @@ export default function DashboardPage() {
                   {telemetry?.db_pool?.acquired_conns ?? 0}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  / {telemetry?.db_pool?.max_conns ?? 10} acquired
+                  / {telemetry?.db_pool?.max_conns ?? 10} active
                 </span>
               </div>
               <div className="flex items-center gap-1.5 mt-2">
@@ -301,16 +304,16 @@ export default function DashboardPage() {
                 href="/telemetry"
                 className="hover:text-foreground inline-flex items-center gap-0.5"
               >
-                Metrics <ArrowUpRight className="h-3 w-3" />
+                Performance <ArrowUpRight className="h-3 w-3" />
               </Link>
             </div>
           </Card>
 
-          {/* Go Runtime KPI */}
+          {/* Server Memory KPI */}
           <Card className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                Go Runtime Heap
+                Server Memory
               </span>
               <Cpu className="h-4 w-4 text-blue-500" />
             </div>
@@ -319,23 +322,23 @@ export default function DashboardPage() {
                 <span className="text-xl font-bold text-foreground">
                   {formatBytes(telemetry?.runtime?.alloc_bytes || 0)}
                 </span>
-                <span className="text-xs text-muted-foreground">active</span>
+                <span className="text-xs text-muted-foreground">in use</span>
               </div>
               <div className="flex items-center gap-1.5 mt-2">
                 <Badge
                   variant="outline"
                   className="text-[10px] px-1.5 py-0 font-mono"
                 >
-                  {telemetry?.runtime?.goroutines ?? 0} Goroutines
+                  {telemetry?.runtime?.goroutines ?? 0} Workers
                 </Badge>
                 <span className="text-[11px] text-muted-foreground">
-                  {telemetry?.runtime?.gc_cycles ?? 0} GCs
+                  {telemetry?.runtime?.gc_cycles ?? 0} Cleanups
                 </span>
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-border flex justify-between text-[11px] text-muted-foreground">
               <span>
-                Sys: {formatBytes(telemetry?.runtime?.sys_bytes || 0)}
+                Reserved: {formatBytes(telemetry?.runtime?.sys_bytes || 0)}
               </span>
               <Link
                 href="/telemetry"
@@ -350,7 +353,7 @@ export default function DashboardPage() {
           <Card className="p-4 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                Inbox & Community
+                Inbox &amp; Community
               </span>
               <Mail className="h-4 w-4 text-violet-500" />
             </div>
@@ -389,16 +392,16 @@ export default function DashboardPage() {
 
         {/* Charts & Live Feed Section */}
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Runtime Heap Trend Chart */}
+          {/* Memory Usage Chart */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-sm font-semibold">
-                    Memory Allocation (MB)
+                    Memory Usage (MB)
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Live Go heap memory profile over time
+                    Memory usage over the last 5 minutes
                   </CardDescription>
                 </div>
                 <Badge
@@ -406,7 +409,7 @@ export default function DashboardPage() {
                   className="text-[10px] gap-1 font-mono"
                 >
                   <Activity className="h-3 w-3 text-primary animate-pulse" />
-                  Live telemetry
+                  Live
                 </Badge>
               </div>
             </CardHeader>
@@ -458,7 +461,7 @@ export default function DashboardPage() {
                       }}
                       formatter={(val: any) => [
                         `${Number(val).toFixed(2)} MB`,
-                        "Heap Alloc",
+                        "Memory",
                       ]}
                     />
                     <Area
@@ -490,7 +493,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <CardDescription className="text-xs">
-                Asynchronous system events
+                Latest system events and alerts
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 flex-1">
