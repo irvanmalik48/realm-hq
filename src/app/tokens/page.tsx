@@ -24,6 +24,7 @@ import {
   MoreHorizontal,
   Plus,
   RefreshCw,
+  RotateCcw,
   Search,
   Trash2,
   X,
@@ -667,29 +668,82 @@ function TokensContent() {
               )}
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Select
                 value={statusFilter}
                 onValueChange={(val) => {
                   if (val) setStatusFilter(val as "all" | "active" | "revoked");
                 }}
               >
-                <SelectTrigger className="h-9 w-full sm:w-36 text-xs">
-                  <SelectValue placeholder="All Statuses" />
+                <SelectTrigger className="h-9 w-full sm:w-40 text-xs bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Filter className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground font-normal">
+                      Status:
+                    </span>
+                    <SelectValue>
+                      {(val) => {
+                        if (val === "active") {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 font-medium text-emerald-500">
+                              <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                              Active
+                            </span>
+                          );
+                        }
+                        if (val === "revoked") {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
+                              <span className="size-1.5 rounded-full bg-destructive shrink-0" />
+                              Revoked
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="font-medium text-foreground">
+                            All
+                          </span>
+                        );
+                      }}
+                    </SelectValue>
+                  </div>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="start" className="min-w-[160px]">
                   <SelectItem value="all" className="text-xs">
-                    All Tokens ({tokens.length})
+                    <span className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-muted-foreground/30" />
+                      All Tokens ({tokens.length})
+                    </span>
                   </SelectItem>
                   <SelectItem value="active" className="text-xs">
-                    Active Only
+                    <span className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                      Active Only
+                    </span>
                   </SelectItem>
                   <SelectItem value="revoked" className="text-xs">
-                    Revoked Only
+                    <span className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-destructive" />
+                      Revoked Only
+                    </span>
                   </SelectItem>
                 </SelectContent>
               </Select>
+
+              {(globalFilter || statusFilter !== "all") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setGlobalFilter("");
+                    setStatusFilter("all");
+                  }}
+                  className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border/80 hover:border-border hover:bg-accent/40 gap-1.5 transition-colors"
+                >
+                  <RotateCcw className="size-3.5" />
+                  <span>Reset</span>
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
