@@ -961,7 +961,7 @@ function CommentsContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {/* View mode toggle */}
           <div className="flex items-center rounded-lg border border-border p-0.5 bg-muted/30">
             <Button
@@ -1530,7 +1530,7 @@ function CommentsContent() {
           </CardHeader>
 
           <CardContent className="p-0">
-            <Table>
+            <Table className="min-w-[700px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
