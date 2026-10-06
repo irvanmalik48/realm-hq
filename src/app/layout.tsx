@@ -16,7 +16,10 @@ function getMetadataBase(): URL {
 
 export const metadata: Metadata = {
   metadataBase: getMetadataBase(),
-  title: "Realm HQ — Command Centre",
+  title: {
+    default: "Command Centre | Realm HQ",
+    template: "%s | Realm HQ",
+  },
   description:
     "Unified management dashboard for Realm system performance, storage, logs, and administration.",
   icons: {
