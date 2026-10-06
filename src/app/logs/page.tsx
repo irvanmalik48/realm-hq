@@ -477,7 +477,7 @@ function LogsContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
@@ -559,7 +559,7 @@ function LogsContent() {
                   if (val) setLevelFilter(val);
                 }}
               >
-                <SelectTrigger className="w-32 h-9 text-xs">
+                <SelectTrigger className="flex-1 sm:w-32 h-9 text-xs">
                   <SelectValue placeholder="Log level" />
                 </SelectTrigger>
                 <SelectContent>
@@ -604,7 +604,7 @@ function LogsContent() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[700px]">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
