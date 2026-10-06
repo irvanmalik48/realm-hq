@@ -161,8 +161,8 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="w-32">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="flex-1 sm:w-32">
               <Select
                 value={period}
                 onValueChange={(val) => {
@@ -644,7 +644,7 @@ export default function AnalyticsPage() {
                 No recent visits recorded.
               </div>
             ) : (
-              <Table>
+              <Table className="min-w-[650px]">
                 <TableHeader className="bg-muted/40">
                   <TableRow>
                     <TableHead className="text-xs">Path</TableHead>
