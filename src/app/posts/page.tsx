@@ -23,9 +23,12 @@ import {
   PenSquare,
   Plus,
   RefreshCw,
+  RotateCcw,
   Search,
+  SlidersHorizontal,
   Tag,
   Trash2,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -598,58 +601,122 @@ export default function PostsPage() {
         </div>
 
         {/* Filters and Search Bar */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by title, slug, or content..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-sm"
-            />
-          </div>
-
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
-            {/* Status Filter */}
-            <div className="flex-1 sm:w-36">
-              <Select
-                value={statusFilter}
-                onValueChange={(val) => {
-                  if (val) setStatusFilter(val);
-                }}
-              >
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Drafts</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex flex-1 flex-wrap items-center gap-2">
+            <div className="relative flex-1 sm:max-w-xs md:max-w-sm min-w-[200px]">
+              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search by title, slug, or content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/50"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
             </div>
+
+            {/* Status Filter */}
+            <Select
+              value={statusFilter}
+              onValueChange={(val) => {
+                if (val) setStatusFilter(val);
+              }}
+            >
+              <SelectTrigger className="h-9 text-xs min-w-[130px] bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+                <div className="flex items-center gap-1.5 truncate">
+                  <SlidersHorizontal className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground font-normal">
+                    Status:
+                  </span>
+                  <SelectValue>
+                    {(val) => {
+                      if (val === "published") {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 font-medium text-emerald-500">
+                            <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            Published
+                          </span>
+                        );
+                      }
+                      if (val === "draft") {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 font-medium text-amber-500">
+                            <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                            Drafts
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="font-medium text-foreground">All</span>
+                      );
+                    }}
+                  </SelectValue>
+                </div>
+              </SelectTrigger>
+              <SelectContent align="start" className="min-w-[150px]">
+                <SelectItem value="all" className="text-xs">
+                  <span className="flex items-center gap-2">
+                    <span className="size-1.5 rounded-full bg-muted-foreground/30" />
+                    All Status
+                  </span>
+                </SelectItem>
+                <SelectItem value="published" className="text-xs">
+                  <span className="flex items-center gap-2">
+                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                    Published
+                  </span>
+                </SelectItem>
+                <SelectItem value="draft" className="text-xs">
+                  <span className="flex items-center gap-2">
+                    <span className="size-1.5 rounded-full bg-amber-500" />
+                    Drafts
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
             {/* Tag Filter */}
-            <div className="flex-1 sm:w-40">
-              <Select
-                value={tagFilter}
-                onValueChange={(val) => {
-                  if (val) setTagFilter(val);
-                }}
-              >
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="All Tags" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tags</SelectItem>
-                  {allTags.map((tag) => (
-                    <SelectItem key={tag} value={tag}>
-                      {tag}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={tagFilter}
+              onValueChange={(val) => {
+                if (val) setTagFilter(val);
+              }}
+            >
+              <SelectTrigger className="h-9 text-xs min-w-[125px] bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+                <div className="flex items-center gap-1.5 truncate">
+                  <Tag className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground font-normal">
+                    Tag:
+                  </span>
+                  <SelectValue>
+                    {(val) => (
+                      <span className="font-medium text-foreground truncate max-w-[100px]">
+                        {val === "all" ? "All" : `#${val}`}
+                      </span>
+                    )}
+                  </SelectValue>
+                </div>
+              </SelectTrigger>
+              <SelectContent align="start" className="min-w-[160px] max-h-64">
+                <SelectItem value="all" className="text-xs">
+                  All Tags ({allTags.length})
+                </SelectItem>
+                {allTags.map((tag) => (
+                  <SelectItem key={tag} value={tag} className="text-xs">
+                    <span className="text-muted-foreground mr-1">#</span>
+                    {tag}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {(searchQuery || statusFilter !== "all" || tagFilter !== "all") && (
               <Button
@@ -660,11 +727,25 @@ export default function PostsPage() {
                   setStatusFilter("all");
                   setTagFilter("all");
                 }}
-                className="h-9 text-xs text-muted-foreground hover:text-foreground"
+                className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border/80 hover:border-border hover:bg-accent/40 gap-1.5 transition-colors"
               >
-                Reset
+                <RotateCcw className="size-3.5" />
+                <span>Reset</span>
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground/80">
+                  {(statusFilter !== "all" ? 1 : 0) +
+                    (tagFilter !== "all" ? 1 : 0) +
+                    (searchQuery ? 1 : 0)}
+                </span>
               </Button>
             )}
+          </div>
+
+          <div className="hidden lg:flex items-center text-xs text-muted-foreground shrink-0">
+            Showing{" "}
+            <span className="font-medium text-foreground mx-1">
+              {filteredData.length}
+            </span>{" "}
+            of {posts.length} articles
           </div>
         </div>
 
