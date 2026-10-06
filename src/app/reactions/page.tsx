@@ -423,13 +423,14 @@ function ReactionsContent() {
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <Button
             variant="outline"
-            size="sm"
+            size="default"
             onClick={fetchReactions}
             disabled={loading}
-            className="gap-1.5 text-xs cursor-pointer"
+            className="h-9 px-3 text-xs gap-1.5 cursor-pointer"
           >
             <RefreshCw
-              className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+              data-icon="inline-start"
+              className={`size-3.5 ${loading ? "animate-spin" : ""}`}
             />
             Refresh
           </Button>
