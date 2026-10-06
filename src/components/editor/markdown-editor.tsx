@@ -173,8 +173,8 @@ export function MarkdownEditor({
       )}
     >
       {/* Editor Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-1 border-b border-border bg-muted/40 p-1.5">
-        <div className="flex flex-wrap items-center gap-0.5">
+      <div className="flex items-center justify-between gap-1.5 border-b border-border bg-muted/40 p-1.5">
+        <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar py-0.5 flex-1 min-w-0 pr-1">
           {/* Heading Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -358,7 +358,7 @@ export function MarkdownEditor({
                 </Button>
               }
             />
-            <PopoverContent className="w-80 p-3">
+            <PopoverContent className="w-[min(calc(100vw-2rem),20rem)] p-3">
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-semibold text-foreground">
                   Insert Link
@@ -418,7 +418,7 @@ export function MarkdownEditor({
                 </Button>
               }
             />
-            <PopoverContent className="w-80 p-3">
+            <PopoverContent className="w-[min(calc(100vw-2rem),20rem)] p-3">
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-semibold text-foreground">
                   Insert Image
@@ -474,7 +474,7 @@ export function MarkdownEditor({
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-md border border-border">
+        <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-md border border-border shrink-0">
           <Button
             type="button"
             variant={mode === "visual" ? "secondary" : "ghost"}
@@ -515,15 +515,15 @@ export function MarkdownEditor({
       </div>
 
       {/* Editor Footer / Stats Bar */}
-      <div className="flex items-center justify-between border-t border-border bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-t border-border bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <span>
             {words} {words === 1 ? "word" : "words"}
           </span>
           <span>•</span>
           <span>{rawText.length} characters</span>
-          <span>•</span>
-          <span>{readingTimeEstimate}</span>
+          <span className="hidden xs:inline">•</span>
+          <span className="hidden xs:inline">{readingTimeEstimate}</span>
         </div>
         <div className="flex items-center gap-1.5 font-mono text-[11px]">
           <span className="size-2 rounded-full bg-emerald-500 inline-block" />
