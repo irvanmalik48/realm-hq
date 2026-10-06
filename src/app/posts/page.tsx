@@ -515,7 +515,7 @@ export default function PostsPage() {
               PostgreSQL.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <Button
               variant="outline"
               size="sm"
@@ -539,7 +539,7 @@ export default function PostsPage() {
           </div>
         </div>
         {/* Metric Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <span className="text-xs font-medium text-muted-foreground">
@@ -609,9 +609,9 @@ export default function PostsPage() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
             {/* Status Filter */}
-            <div className="w-36">
+            <div className="flex-1 sm:w-36">
               <Select
                 value={statusFilter}
                 onValueChange={(val) => {
@@ -630,7 +630,7 @@ export default function PostsPage() {
             </div>
 
             {/* Tag Filter */}
-            <div className="w-40">
+            <div className="flex-1 sm:w-40">
               <Select
                 value={tagFilter}
                 onValueChange={(val) => {
@@ -685,7 +685,7 @@ export default function PostsPage() {
             </Empty>
           ) : (
             <>
-              <Table>
+              <Table className="min-w-[750px]">
                 <TableHeader className="bg-muted/40">
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
