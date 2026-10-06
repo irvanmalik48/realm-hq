@@ -136,7 +136,7 @@ export default function TelemetryPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
             <div className="flex items-center gap-2">
               <Switch
                 id="auto-refresh"
