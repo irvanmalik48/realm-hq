@@ -48,6 +48,12 @@ function LoginForm() {
   const { login, verify2FA } = useAuth();
   const [submitting, setSubmitting] = React.useState(false);
 
+  React.useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.title = "Sign In | Realm HQ";
+    }
+  }, []);
+
   // 2FA Challenge state
   const [twoFactorToken, setTwoFactorToken] = React.useState<string | null>(
     null,
