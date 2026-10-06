@@ -161,56 +161,54 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <div className="flex-1 sm:w-44">
-              <Select
-                value={period}
-                onValueChange={(val) => {
-                  if (val) setPeriod(val);
-                }}
-              >
-                <SelectTrigger className="h-9 text-xs bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Clock className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground font-normal">
-                      Range:
-                    </span>
-                    <SelectValue>
-                      {(val) => {
-                        const labels: Record<string, string> = {
-                          "24h": "Last 24 Hours",
-                          "7d": "Last 7 Days",
-                          "30d": "Last 30 Days",
-                          all: "All Time",
-                        };
-                        return (
-                          <span className="font-medium text-foreground">
-                            {labels[val] || val}
-                          </span>
-                        );
-                      }}
-                    </SelectValue>
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="24h">Last 24 Hours</SelectItem>
-                  <SelectItem value="7d">Last 7 Days</SelectItem>
-                  <SelectItem value="30d">Last 30 Days</SelectItem>
-                  <SelectItem value="all">All Time</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Select
+              value={period}
+              onValueChange={(val) => {
+                if (val) setPeriod(val);
+              }}
+            >
+              <SelectTrigger className="h-9 px-3 text-xs min-w-[175px] bg-background/50 hover:bg-accent/40 transition-colors">
+                <div className="flex items-center gap-1.5 truncate">
+                  <Clock className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground font-normal">
+                    Range:
+                  </span>
+                  <SelectValue>
+                    {(val) => {
+                      const labels: Record<string, string> = {
+                        "24h": "Last 24 Hours",
+                        "7d": "Last 7 Days",
+                        "30d": "Last 30 Days",
+                        all: "All Time",
+                      };
+                      return (
+                        <span className="font-medium text-foreground">
+                          {labels[val] || val}
+                        </span>
+                      );
+                    }}
+                  </SelectValue>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="24h">Last 24 Hours</SelectItem>
+                <SelectItem value="7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d">Last 30 Days</SelectItem>
+                <SelectItem value="all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
 
             <Button
               variant="outline"
-              size="sm"
+              size="default"
               onClick={() => fetchStats(true)}
               disabled={isRefreshing}
-              className="gap-1.5"
+              className="h-9 px-3 text-xs gap-1.5 cursor-pointer"
             >
               <RefreshCw
                 data-icon="inline-start"
-                className={isRefreshing ? "animate-spin" : ""}
+                className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`}
               />
               Refresh
             </Button>
