@@ -15,9 +15,11 @@ import {
   ShieldCheck,
   Terminal,
   UserCheck,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import * as React from "react";
 import { TwoFactorDialog } from "@/components/auth/two-factor-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -105,7 +107,13 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, admin, logout } = useAuth();
-  const { state, isMobile } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
+
+  const handleNavClick = React.useCallback(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [isMobile, setOpenMobile]);
 
   const filteredItems = navItems.filter((item) => {
     if (item.superadminOnly && !admin?.is_superadmin) {
@@ -117,35 +125,49 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="h-16 border-b border-sidebar-border px-3 group-data-[collapsible=icon]:px-0 flex flex-col justify-center">
-        <div className="flex items-center gap-3 px-1 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Link
-                  href="/"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-opacity"
-                >
-                  <Command className="h-4 w-4" />
-                </Link>
-              }
-            />
-            <TooltipContent
-              side="right"
-              align="center"
-              hidden={state !== "collapsed" || isMobile}
-            >
-              Realm HQ
-            </TooltipContent>
-          </Tooltip>
+        <div className="flex items-center justify-between gap-3 px-1 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+          <div className="flex items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Link
+                    href="/"
+                    onClick={handleNavClick}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm hover:opacity-90 transition-opacity"
+                  >
+                    <Command className="h-4 w-4" />
+                  </Link>
+                }
+              />
+              <TooltipContent
+                side="right"
+                align="center"
+                hidden={state !== "collapsed" || isMobile}
+              >
+                Realm HQ
+              </TooltipContent>
+            </Tooltip>
 
-          <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <span className="font-semibold text-sm tracking-tight text-sidebar-foreground truncate">
-              Realm HQ
-            </span>
-            <span className="text-xs text-muted-foreground truncate">
-              Command Centre
-            </span>
+            <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
+              <span className="font-semibold text-sm tracking-tight text-sidebar-foreground truncate">
+                Realm HQ
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
+                Command Centre
+              </span>
+            </div>
           </div>
+
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setOpenMobile(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors cursor-pointer"
+              aria-label="Close navigation sidebar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </SidebarHeader>
 
@@ -168,6 +190,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       isActive={isActive}
                       tooltip={item.title}
+                      onClick={handleNavClick}
                       render={<Link href={item.href} />}
                     >
                       <Icon className="h-4 w-4" />
