@@ -551,7 +551,7 @@ function TokensContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
@@ -667,7 +667,7 @@ function TokensContent() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Filter className="h-3.5 w-3.5 text-muted-foreground" />
               <Select
                 value={statusFilter}
@@ -675,7 +675,7 @@ function TokensContent() {
                   if (val) setStatusFilter(val as "all" | "active" | "revoked");
                 }}
               >
-                <SelectTrigger className="h-9 w-36 text-xs">
+                <SelectTrigger className="h-9 w-full sm:w-36 text-xs">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -695,7 +695,7 @@ function TokensContent() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[700px]">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
