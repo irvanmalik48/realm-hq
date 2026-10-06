@@ -123,7 +123,7 @@ export function AppSidebar() {
   });
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" style={{ viewTransitionName: "site-sidebar" }}>
       <SidebarHeader className="h-16 border-b border-sidebar-border px-3 group-data-[collapsible=icon]:px-0 flex flex-col justify-center">
         <div className="flex items-center justify-between gap-3 px-1 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
           <div className="flex items-center gap-3">
@@ -148,11 +148,11 @@ export function AppSidebar() {
               </TooltipContent>
             </Tooltip>
 
-            <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-              <span className="font-semibold text-sm tracking-tight text-sidebar-foreground truncate">
+            <div className="flex flex-col overflow-hidden transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.2,0,0,1)] max-w-[160px] opacity-100 group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0 pointer-events-none">
+              <span className="font-semibold text-sm tracking-tight text-sidebar-foreground truncate whitespace-nowrap">
                 Realm HQ
               </span>
-              <span className="text-xs text-muted-foreground truncate">
+              <span className="text-xs text-muted-foreground truncate whitespace-nowrap">
                 Command Centre
               </span>
             </div>
@@ -173,7 +173,7 @@ export function AppSidebar() {
 
       <SidebarContent className="no-scrollbar">
         <SidebarGroup className="p-2 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pt-3">
-          <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden text-[11px] font-medium tracking-wider uppercase text-muted-foreground/80 px-2 mb-1">
+          <SidebarGroupLabel className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/80 px-2 mb-1">
             Management
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -191,7 +191,12 @@ export function AppSidebar() {
                       isActive={isActive}
                       tooltip={item.title}
                       onClick={handleNavClick}
-                      render={<Link href={item.href} />}
+                      render={
+                        <Link
+                          href={item.href}
+                          transitionTypes={["nav-forward"]}
+                        />
+                      }
                     >
                       <Icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -204,8 +209,8 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2 group-data-[collapsible=icon]:p-2">
-        <div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 w-full">
+      <SidebarFooter className="border-t border-sidebar-border p-2 group-data-[collapsible=icon]:p-2 overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)]">
+        <div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 w-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)]">
           {/* User profile / Avatar */}
           <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
             <Tooltip>
@@ -238,22 +243,22 @@ export function AppSidebar() {
               </TooltipContent>
             </Tooltip>
 
-            <div className="flex flex-col overflow-hidden text-left group-data-[collapsible=icon]:hidden">
-              <span className="text-xs font-medium truncate text-sidebar-foreground">
+            <div className="flex flex-col overflow-hidden text-left transition-[opacity,max-width] duration-300 ease-[cubic-bezier(0.2,0,0,1)] max-w-[140px] opacity-100 group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0 pointer-events-none">
+              <span className="text-xs font-medium truncate text-sidebar-foreground whitespace-nowrap">
                 {user?.full_name || user?.username || "Admin"}
               </span>
-              <div className="flex items-center gap-1 mt-0.5">
+              <div className="flex items-center gap-1 mt-0.5 whitespace-nowrap">
                 {admin?.is_superadmin ? (
                   <Badge
                     variant="outline"
-                    className="text-[10px] px-1 py-0 h-4 gap-0.5 border-amber-500/40 text-amber-500"
+                    className="text-[10px] px-1 py-0 h-4 gap-0.5 border-amber-500/40 text-amber-500 shrink-0"
                   >
                     <ShieldCheck className="h-2.5 w-2.5" /> Superadmin
                   </Badge>
                 ) : (
                   <Badge
                     variant="secondary"
-                    className="text-[10px] px-1 py-0 h-4 gap-0.5"
+                    className="text-[10px] px-1 py-0 h-4 gap-0.5 shrink-0"
                   >
                     <UserCheck className="h-2.5 w-2.5" /> Staff
                   </Badge>
