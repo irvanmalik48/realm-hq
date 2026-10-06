@@ -7,14 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-function getApiUrl(): string {
-  if (env.NEXT_PUBLIC_API_URL) return env.NEXT_PUBLIC_API_URL;
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-  return env.NODE_ENV === "development"
-    ? "http://localhost:8080"
-    : "https://api.irvanma.eu.org";
-}
-
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
@@ -25,7 +17,10 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const apiUrl = getApiUrl();
+    const apiUrl =
+      env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8080";
 
     const forwardRes = await fetch(`${apiUrl}/v1/analytics/events`, {
       method: "POST",
@@ -58,7 +53,10 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const period = searchParams.get("period") || "30d";
-    const apiUrl = getApiUrl();
+    const apiUrl =
+      env.NEXT_PUBLIC_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8080";
 
     const res = await fetch(
       `${apiUrl}/v1/analytics/stats?period=${encodeURIComponent(period)}`,
