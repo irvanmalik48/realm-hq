@@ -14,6 +14,7 @@ import * as React from "react";
 import {
   Area,
   AreaChart,
+  CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -29,6 +30,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  buildContinuousTrend,
+  type NormalizedTrendPoint,
+} from "@/lib/analytics-utils";
 
 interface TelemetryData {
   status: string;
@@ -171,18 +176,19 @@ export default function DashboardPage() {
     fetchData();
   };
 
-  const trafficTrend = React.useMemo(() => {
-    if (analyticsStats?.views_trend && analyticsStats.views_trend.length > 0) {
-      return analyticsStats.views_trend.map((pt) => ({
-        bucket: pt.date.length > 10 ? pt.date.slice(11) : pt.date,
-        views: pt.views,
-        visitors: pt.unique,
-      }));
+  const [trafficTrend, setTrafficTrend] = React.useState<
+    NormalizedTrendPoint[]
+  >([]);
+
+  React.useEffect(() => {
+    if (analyticsStats?.views_trend || analyticsStats?.trend) {
+      setTrafficTrend(
+        buildContinuousTrend(
+          analyticsStats.views_trend || analyticsStats.trend,
+          "24h",
+        ),
+      );
     }
-    if (analyticsStats?.trend && analyticsStats.trend.length > 0) {
-      return analyticsStats.trend;
-    }
-    return [];
   }, [analyticsStats]);
 
   return (
@@ -388,9 +394,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Charts & Live Feed Section */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Web Traffic Chart */}
-          <Card className="lg:col-span-2">
+        <div className="space-y-6">
+          {/* Web Traffic Chart (Full Width & Extended Height) */}
+          <Card className="w-full">
             <CardHeader className="pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
@@ -416,7 +422,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[220px] w-full pt-4">
+              <div className="h-[340px] w-full pt-4">
                 {trafficTrend.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-xs text-muted-foreground gap-1">
                     <span>No traffic recorded in the last 24 hours.</span>
@@ -429,7 +435,7 @@ export default function DashboardPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                       data={trafficTrend}
-                      margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                     >
                       <defs>
                         <linearGradient
@@ -469,11 +475,13 @@ export default function DashboardPage() {
                           />
                         </linearGradient>
                       </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                       <XAxis
                         dataKey="bucket"
                         stroke="var(--color-muted-foreground)"
                         fontSize={11}
                         tickLine={false}
+                        interval={2}
                       />
                       <YAxis
                         stroke="var(--color-muted-foreground)"
@@ -515,12 +523,17 @@ export default function DashboardPage() {
           </Card>
 
           {/* Quick Recent Logs */}
-          <Card className="flex flex-col justify-between">
-            <CardHeader className="pb-2">
+          <Card className="w-full">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold">
-                  Recent Logs
-                </CardTitle>
+                <div>
+                  <CardTitle className="text-sm font-semibold">
+                    Recent Logs
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Latest system events and alerts
+                  </CardDescription>
+                </div>
                 <Link
                   href="/logs"
                   className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
@@ -528,47 +541,46 @@ export default function DashboardPage() {
                   View all <ArrowUpRight className="h-3 w-3" />
                 </Link>
               </div>
-              <CardDescription className="text-xs">
-                Latest system events and alerts
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 flex-1">
+            <CardContent>
               {recentLogs.length === 0 ? (
-                <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
+                <div className="h-24 flex items-center justify-center text-xs text-muted-foreground">
                   No logs recorded yet.
                 </div>
               ) : (
-                recentLogs.map((log) => {
-                  const isErr = log.level.toUpperCase() === "ERROR";
-                  const isWarn = log.level.toUpperCase() === "WARN";
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {recentLogs.map((log) => {
+                    const isErr = log.level.toUpperCase() === "ERROR";
+                    const isWarn = log.level.toUpperCase() === "WARN";
 
-                  return (
-                    <div
-                      key={log.id}
-                      className="p-2 rounded-lg bg-muted/40 border border-border/40 text-xs font-mono flex flex-col gap-1"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`text-[10px] font-bold uppercase ${
-                            isErr
-                              ? "text-destructive"
-                              : isWarn
-                                ? "text-amber-500"
-                                : "text-muted-foreground"
-                          }`}
-                        >
-                          {log.level}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(log.timestamp).toLocaleTimeString()}
-                        </span>
+                    return (
+                      <div
+                        key={log.id}
+                        className="p-2.5 rounded-lg bg-muted/40 border border-border/40 text-xs font-mono flex flex-col gap-1.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-[10px] font-bold uppercase ${
+                              isErr
+                                ? "text-destructive"
+                                : isWarn
+                                  ? "text-amber-500"
+                                  : "text-muted-foreground"
+                            }`}
+                          >
+                            {log.level}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(log.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="truncate text-foreground font-sans text-xs">
+                          {log.message}
+                        </p>
                       </div>
-                      <p className="truncate text-foreground font-sans text-xs">
-                        {log.message}
-                      </p>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>

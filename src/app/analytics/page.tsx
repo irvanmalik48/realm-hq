@@ -52,6 +52,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  buildContinuousTrend,
+  type NormalizedTrendPoint,
+} from "@/lib/analytics-utils";
 
 interface TrendPoint {
   date: string;
@@ -143,6 +147,14 @@ export default function AnalyticsPage() {
     const interval = setInterval(() => fetchStats(false), 20000); // 20s polling
     return () => clearInterval(interval);
   }, [fetchStats]);
+
+  const [trendData, setTrendData] = React.useState<NormalizedTrendPoint[]>([]);
+
+  React.useEffect(() => {
+    if (data?.views_trend) {
+      setTrendData(buildContinuousTrend(data.views_trend, period));
+    }
+  }, [data?.views_trend, period]);
 
   const topPost = data?.top_posts?.[0];
 
@@ -315,8 +327,8 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent className="pt-2">
             {isLoading ? (
-              <Skeleton className="h-64 w-full" />
-            ) : !data?.views_trend || data.views_trend.length === 0 ? (
+              <Skeleton className="h-[340px] w-full" />
+            ) : !trendData || trendData.length === 0 ? (
               <Empty className="py-12">
                 <EmptyHeader>
                   <EmptyTitle>No traffic recorded</EmptyTitle>
@@ -327,10 +339,10 @@ export default function AnalyticsPage() {
                 </EmptyHeader>
               </Empty>
             ) : (
-              <div className="h-64 w-full">
+              <div className="h-[340px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
-                    data={data.views_trend}
+                    data={trendData}
                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                   >
                     <defs>
@@ -373,11 +385,12 @@ export default function AnalyticsPage() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                     <XAxis
-                      dataKey="date"
+                      dataKey="bucket"
                       stroke="#888888"
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
+                      interval={period === "24h" ? 2 : period === "30d" ? 3 : 0}
                     />
                     <YAxis
                       stroke="#888888"
