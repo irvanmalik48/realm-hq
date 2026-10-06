@@ -232,11 +232,12 @@ function EditPostContent() {
               Editing article /{post.slug}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
             <Button
               variant="outline"
               size="sm"
               render={<Link href="/posts" className="gap-1.5" />}
+              className="flex-1 sm:flex-initial"
             >
               <ArrowLeft data-icon="inline-start" />
               Posts
@@ -255,6 +256,7 @@ function EditPostContent() {
                   Preview
                 </a>
               }
+              className="flex-1 sm:flex-initial"
             >
               <ExternalLink data-icon="inline-start" />
               Preview
@@ -264,10 +266,11 @@ function EditPostContent() {
               size="sm"
               disabled={isSaving}
               onClick={() => handleSave()}
-              className="gap-1.5"
+              className="gap-1.5 flex-1 sm:flex-initial"
             >
               <Save data-icon="inline-start" />
-              Save Changes
+              <span className="hidden xs:inline">Save Changes</span>
+              <span className="xs:hidden">Save</span>
             </Button>
           </div>
         </div>
