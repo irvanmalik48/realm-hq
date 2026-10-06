@@ -112,33 +112,37 @@ export default function NewPostPage() {
               Compose a new post using the WYSIWYG markdown editor.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
             <Button
               variant="outline"
               size="sm"
               render={<Link href="/posts" className="gap-1.5" />}
+              className="flex-1 sm:flex-initial"
             >
               <ArrowLeft data-icon="inline-start" />
-              Back to Posts
+              <span className="hidden xs:inline">Back to Posts</span>
+              <span className="xs:hidden">Back</span>
             </Button>
             <Button
               variant="secondary"
               size="sm"
               disabled={isSubmitting}
               onClick={() => handleSubmit(false)}
-              className="gap-1.5"
+              className="gap-1.5 flex-1 sm:flex-initial"
             >
               <Save data-icon="inline-start" />
-              Save Draft
+              <span className="hidden xs:inline">Save Draft</span>
+              <span className="xs:hidden">Draft</span>
             </Button>
             <Button
               size="sm"
               disabled={isSubmitting}
               onClick={() => handleSubmit(true)}
-              className="gap-1.5"
+              className="gap-1.5 flex-1 sm:flex-initial"
             >
               <Send data-icon="inline-start" />
-              Publish Article
+              <span className="hidden xs:inline">Publish Article</span>
+              <span className="xs:hidden">Publish</span>
             </Button>
           </div>
         </div>
