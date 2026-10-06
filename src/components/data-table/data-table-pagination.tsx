@@ -37,7 +37,7 @@ export function DataTablePagination<TData>({
   const endRow = Math.min((pageIndex + 1) * pageSize, totalRows);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-border bg-card/40">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3 sm:px-4 py-3 border-t border-border bg-card/40">
       <div className="flex items-center gap-2 text-xs text-muted-foreground w-full sm:w-auto justify-between sm:justify-start">
         {showSelectedCount && selectedRows > 0 ? (
           <span className="font-medium text-foreground">
@@ -55,8 +55,8 @@ export function DataTablePagination<TData>({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-6 w-full sm:w-auto justify-between sm:justify-end">
+        <div className="flex items-center space-x-1.5 sm:space-x-2">
           <p className="text-xs text-muted-foreground whitespace-nowrap">
             Rows per page
           </p>
