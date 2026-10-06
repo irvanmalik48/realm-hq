@@ -392,9 +392,9 @@ export default function DashboardPage() {
           {/* Web Traffic Chart */}
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <CardTitle className="text-sm font-semibold">
                       Visitor Traffic (24h)
                     </CardTitle>
@@ -403,13 +403,13 @@ export default function DashboardPage() {
                       {analyticsStats?.unique_visitors ?? 0} visitors
                     </Badge>
                   </div>
-                  <CardDescription className="text-xs">
+                  <CardDescription className="text-xs mt-0.5">
                     Live page views and unique visitors across all managed sites
                   </CardDescription>
                 </div>
                 <Link
                   href="/analytics"
-                  className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
+                  className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 self-start sm:self-auto"
                 >
                   Analytics <ArrowUpRight className="h-3 w-3" />
                 </Link>
