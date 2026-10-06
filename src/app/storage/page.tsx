@@ -1361,7 +1361,7 @@ function StorageContent() {
                 if (val) setBackendFilter(val);
               }}
             >
-              <SelectTrigger className="w-32 h-8.5 text-xs rounded-lg">
+              <SelectTrigger className="flex-1 sm:w-32 h-8.5 text-xs rounded-lg">
                 <SelectValue placeholder="All Engines" />
               </SelectTrigger>
               <SelectContent>
@@ -1377,7 +1377,7 @@ function StorageContent() {
                 if (val) setSortBy(val);
               }}
             >
-              <SelectTrigger className="w-36 h-8.5 text-xs rounded-lg">
+              <SelectTrigger className="flex-1 sm:w-36 h-8.5 text-xs rounded-lg">
                 <ArrowUpDown className="h-3 w-3 mr-1 text-muted-foreground" />
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
@@ -1393,7 +1393,7 @@ function StorageContent() {
           </div>
 
           {/* Right action & view switch controls */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             {/* View Mode Toggle */}
             <div className="flex items-center bg-muted/40 p-0.5 rounded-lg border border-border/60">
               <Button
@@ -1639,7 +1639,7 @@ function StorageContent() {
           ) : (
             /* LIST VIEW */
             <div className="rounded-lg border border-border/80 overflow-hidden">
-              <Table>
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id} className="bg-muted/20">
