@@ -19,9 +19,11 @@ import {
   Copy,
   Download,
   Eye,
+  Filter,
   Info,
   MoreHorizontal,
   RefreshCw,
+  RotateCcw,
   Search,
   Trash2,
   X,
@@ -559,24 +561,85 @@ function LogsContent() {
                   if (val) setLevelFilter(val);
                 }}
               >
-                <SelectTrigger className="flex-1 sm:w-32 h-9 text-xs">
-                  <SelectValue placeholder="Log level" />
+                <SelectTrigger className="flex-1 sm:w-36 h-9 text-xs bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Filter className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground font-normal">
+                      Level:
+                    </span>
+                    <SelectValue>
+                      {(val) => {
+                        if (val === "DEBUG") {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 font-medium text-slate-400">
+                              <span className="size-1.5 rounded-full bg-slate-400 shrink-0" />
+                              DEBUG
+                            </span>
+                          );
+                        }
+                        if (val === "INFO") {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 font-medium text-blue-500">
+                              <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
+                              INFO
+                            </span>
+                          );
+                        }
+                        if (val === "WARN") {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 font-medium text-amber-500">
+                              <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                              WARN
+                            </span>
+                          );
+                        }
+                        if (val === "ERROR") {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
+                              <span className="size-1.5 rounded-full bg-destructive shrink-0" />
+                              ERROR
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="font-medium text-foreground">
+                            All
+                          </span>
+                        );
+                      }}
+                    </SelectValue>
+                  </div>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="start" className="min-w-[150px]">
                   <SelectItem value="all" className="text-xs">
-                    All Levels
+                    <span className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-muted-foreground/30" />
+                      All Levels
+                    </span>
                   </SelectItem>
                   <SelectItem value="DEBUG" className="text-xs">
-                    DEBUG
+                    <span className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-slate-400" />
+                      DEBUG
+                    </span>
                   </SelectItem>
                   <SelectItem value="INFO" className="text-xs">
-                    INFO
+                    <span className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-blue-500" />
+                      INFO
+                    </span>
                   </SelectItem>
                   <SelectItem value="WARN" className="text-xs">
-                    WARN
+                    <span className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-amber-500" />
+                      WARN
+                    </span>
                   </SelectItem>
                   <SelectItem value="ERROR" className="text-xs">
-                    ERROR
+                    <span className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-destructive" />
+                      ERROR
+                    </span>
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -594,6 +657,22 @@ function LogsContent() {
                     Trace: {traceFilter.slice(0, 8)}... ×
                   </Badge>
                 </button>
+              )}
+
+              {(search || levelFilter !== "all" || traceFilter) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearch("");
+                    setLevelFilter("all");
+                    setTraceFilter("");
+                  }}
+                  className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border/80 hover:border-border hover:bg-accent/40 gap-1.5 transition-colors"
+                >
+                  <RotateCcw className="size-3.5" />
+                  <span>Reset</span>
+                </Button>
               )}
             </div>
 
