@@ -2,6 +2,7 @@
 
 import type * as React from "react";
 import { DirectionalTransition } from "@/components/directional-transition";
+import { AppFooter } from "@/components/layout/app-footer";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -33,9 +34,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <SidebarInset className="flex flex-col flex-1 min-w-0">
           <AppHeader />
-          <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-8">
-            <DirectionalTransition>{children}</DirectionalTransition>
-          </main>
+          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+            <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8">
+              <DirectionalTransition>{children}</DirectionalTransition>
+            </main>
+            <AppFooter />
+          </div>
         </SidebarInset>
       </div>
     </SidebarProvider>
