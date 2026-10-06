@@ -66,7 +66,10 @@ export function AppHeader() {
       : { title: "Dashboard", subtitle: "Management Console" });
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/80 px-3 sm:px-4 md:px-6 backdrop-blur-md transition-colors">
+    <header
+      style={{ viewTransitionName: "site-header" }}
+      className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/80 px-3 sm:px-4 md:px-6 backdrop-blur-md transition-colors"
+    >
       <div className="flex items-center gap-2 sm:gap-3">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="h-4" />
