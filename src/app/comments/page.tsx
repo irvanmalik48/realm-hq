@@ -1117,7 +1117,18 @@ function CommentsContent() {
                         onValueChange={(slug) => setSelectedPostSlug(slug)}
                       >
                         <SelectTrigger className="h-8.5 w-[210px] text-xs">
-                          <SelectValue placeholder="Switch article" />
+                          <SelectValue placeholder="Switch article">
+                            {(slug) => {
+                              const found = postGroups.find(
+                                (g) => g.slug === slug,
+                              );
+                              return (
+                                <span className="font-medium truncate">
+                                  {found?.title || slug || "Switch article"}
+                                </span>
+                              );
+                            }}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="max-h-60">
                           {postGroups.map((g) => (
@@ -1717,7 +1728,12 @@ function CommentsContent() {
                 onValueChange={(val) => setNewCommentSlug(val || "")}
               >
                 <SelectTrigger className="h-8.5 text-xs">
-                  <SelectValue placeholder="Select an article" />
+                  <SelectValue placeholder="Select an article">
+                    {(slug) => {
+                      const found = postGroups.find((g) => g.slug === slug);
+                      return found?.title || slug || "Select an article";
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {postGroups.map((g) => (
