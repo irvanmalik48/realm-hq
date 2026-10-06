@@ -611,7 +611,7 @@ function AdminsContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <TwoFactorDialog
             trigger={
               <Button
@@ -699,7 +699,7 @@ function AdminsContent() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Filter className="h-3.5 w-3.5 text-muted-foreground" />
               <Select
                 value={roleFilter}
@@ -707,7 +707,7 @@ function AdminsContent() {
                   if (val) setRoleFilter(val as "all" | "superadmin" | "staff");
                 }}
               >
-                <SelectTrigger className="h-9 w-36 text-xs">
+                <SelectTrigger className="h-9 w-full sm:w-36 text-xs">
                   <SelectValue placeholder="All Roles" />
                 </SelectTrigger>
                 <SelectContent>
@@ -727,7 +727,7 @@ function AdminsContent() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <Table>
+          <Table className="min-w-[700px]">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
