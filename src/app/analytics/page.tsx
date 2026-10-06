@@ -162,15 +162,35 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <div className="flex-1 sm:w-32">
+            <div className="flex-1 sm:w-44">
               <Select
                 value={period}
                 onValueChange={(val) => {
                   if (val) setPeriod(val);
                 }}
               >
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Period" />
+                <SelectTrigger className="h-9 text-xs bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Clock className="size-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground font-normal">
+                      Range:
+                    </span>
+                    <SelectValue>
+                      {(val) => {
+                        const labels: Record<string, string> = {
+                          "24h": "Last 24 Hours",
+                          "7d": "Last 7 Days",
+                          "30d": "Last 30 Days",
+                          all: "All Time",
+                        };
+                        return (
+                          <span className="font-medium text-foreground">
+                            {labels[val] || val}
+                          </span>
+                        );
+                      }}
+                    </SelectValue>
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="24h">Last 24 Hours</SelectItem>
