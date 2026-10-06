@@ -10,14 +10,14 @@ export function DirectionalTransition({
       enter={{
         "nav-forward": "nav-forward",
         "nav-back": "nav-back",
-        default: "none",
+        default: "page-fade",
       }}
       exit={{
         "nav-forward": "nav-forward",
         "nav-back": "nav-back",
-        default: "none",
+        default: "page-fade",
       }}
-      default="none"
+      default="page-fade"
     >
       {children}
     </ViewTransition>
