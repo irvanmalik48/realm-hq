@@ -2,6 +2,7 @@
 
 import { Activity } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -64,6 +65,12 @@ export function AppHeader() {
     (pathname.startsWith("/posts/")
       ? { title: "Edit Article", subtitle: "Update article content and status" }
       : { title: "Dashboard", subtitle: "Management Console" });
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.title = `${current.title} | Realm HQ`;
+    }
+  }, [current.title]);
 
   return (
     <header
