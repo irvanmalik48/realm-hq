@@ -35,6 +35,7 @@ import {
   Lock,
   Music,
   RefreshCw,
+  RotateCcw,
   Search,
   Server,
   ShieldCheck,
@@ -1361,8 +1362,32 @@ function StorageContent() {
                 if (val) setBackendFilter(val);
               }}
             >
-              <SelectTrigger className="flex-1 sm:w-32 h-8.5 text-xs rounded-lg">
-                <SelectValue placeholder="All Engines" />
+              <SelectTrigger className="flex-1 sm:w-36 h-8.5 text-xs rounded-lg bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+                <div className="flex items-center gap-1.5 truncate">
+                  <Server className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground font-normal">
+                    Engine:
+                  </span>
+                  <SelectValue>
+                    {(val) => {
+                      if (val === "s3")
+                        return (
+                          <span className="font-medium text-foreground">
+                            AWS S3
+                          </span>
+                        );
+                      if (val === "local")
+                        return (
+                          <span className="font-medium text-foreground">
+                            Local Disk
+                          </span>
+                        );
+                      return (
+                        <span className="font-medium text-foreground">All</span>
+                      );
+                    }}
+                  </SelectValue>
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Engines</SelectItem>
@@ -1377,9 +1402,30 @@ function StorageContent() {
                 if (val) setSortBy(val);
               }}
             >
-              <SelectTrigger className="flex-1 sm:w-36 h-8.5 text-xs rounded-lg">
-                <ArrowUpDown className="h-3 w-3 mr-1 text-muted-foreground" />
-                <SelectValue placeholder="Sort By" />
+              <SelectTrigger className="flex-1 sm:w-40 h-8.5 text-xs rounded-lg bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+                <div className="flex items-center gap-1.5 truncate">
+                  <ArrowUpDown className="size-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground font-normal">
+                    Sort:
+                  </span>
+                  <SelectValue>
+                    {(val) => {
+                      const labels: Record<string, string> = {
+                        newest: "Newest",
+                        oldest: "Oldest",
+                        name: "Name",
+                        "size-desc": "Largest",
+                        "size-asc": "Smallest",
+                        savings: "Savings",
+                      };
+                      return (
+                        <span className="font-medium text-foreground">
+                          {labels[val] || val}
+                        </span>
+                      );
+                    }}
+                  </SelectValue>
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="newest">Newest First</SelectItem>
@@ -1390,6 +1436,24 @@ function StorageContent() {
                 <SelectItem value="savings">Highest Savings</SelectItem>
               </SelectContent>
             </Select>
+
+            {(globalFilter ||
+              backendFilter !== "all" ||
+              sortBy !== "newest") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setGlobalFilter("");
+                  setBackendFilter("all");
+                  setSortBy("newest");
+                }}
+                className="h-8.5 px-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border/80 hover:border-border hover:bg-accent/40 gap-1.5 transition-colors"
+              >
+                <RotateCcw className="size-3.5" />
+                <span>Reset</span>
+              </Button>
+            )}
           </div>
 
           {/* Right action & view switch controls */}
