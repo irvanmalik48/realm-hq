@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
+import { DataTablePagination } from "@/components/data-table";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { TableSkeleton } from "@/components/layout/table-skeleton";
 import {
@@ -1548,7 +1549,8 @@ function StorageContent() {
           ) : viewMode === "grid" ? (
             /* GRID VIEW */
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
-              {filteredAndSortedFiles.map((file) => {
+              {table.getRowModel().rows.map((row) => {
+                const file = row.original;
                 const visual = getFileVisual(file.content_type, file.filename);
                 const Icon = visual.icon;
                 return (
@@ -1741,35 +1743,13 @@ function StorageContent() {
             </div>
           )}
 
-          {/* Pagination Controls */}
-          {table.getPageCount() > 1 && (
-            <div className="flex items-center justify-between pt-4 mt-4 border-t border-border">
-              <div className="text-xs text-muted-foreground font-mono">
-                Page {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount()} ({filteredAndSortedFiles.length} items)
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                  className="h-8 text-xs cursor-pointer"
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                  className="h-8 text-xs cursor-pointer"
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          {/* Configurable Pagination Controls */}
+          <div className="rounded-lg border border-border/80 overflow-hidden">
+            <DataTablePagination
+              table={table}
+              pageSizeOptions={[10, 15, 25, 50, 100]}
+            />
+          </div>
         </div>
       </Card>
 
