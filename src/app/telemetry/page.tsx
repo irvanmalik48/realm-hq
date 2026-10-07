@@ -1,6 +1,6 @@
 "use client";
 
-import { Cpu, Database, RefreshCw, Zap } from "lucide-react";
+import { Activity, Cpu, Database, RefreshCw, Zap } from "lucide-react";
 import * as React from "react";
 import {
   Area,
@@ -127,10 +127,11 @@ export default function TelemetryPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
               System Performance &amp; Health
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Real-time server resource usage, active database connections, and
               memory allocation.
             </p>
