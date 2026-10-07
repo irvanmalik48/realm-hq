@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  type PaginationState,
   useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -249,6 +250,18 @@ function StorageContent() {
   const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
   const [sortBy, setSortBy] = React.useState<string>("newest");
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 15,
+  });
+
+  React.useEffect(() => {
+    void backendFilter;
+    void categoryFilter;
+    void globalFilter;
+    void sortBy;
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [backendFilter, categoryFilter, globalFilter, sortBy]);
 
   // Inspector sheet
   const [activeInspector, setActiveInspector] = React.useState<FileItem | null>(
@@ -904,14 +917,13 @@ function StorageContent() {
   const table = useReactTable({
     data: filteredAndSortedFiles,
     columns,
+    state: {
+      pagination,
+    },
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 15,
-      },
-    },
   });
 
   return (
@@ -1747,6 +1759,7 @@ function StorageContent() {
           <div className="rounded-lg border border-border/80 overflow-hidden">
             <DataTablePagination
               table={table}
+              totalCount={filteredAndSortedFiles.length}
               pageSizeOptions={[10, 15, 25, 50, 100]}
             />
           </div>
