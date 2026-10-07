@@ -325,8 +325,10 @@ export default function NewPostPage() {
                               type="button"
                               onClick={() => handleRemoveTag(tag)}
                               className="hover:text-destructive cursor-pointer"
+                              aria-label={`Remove tag ${tag}`}
                             >
                               <X className="size-2.5" />
+                              <span className="sr-only">Remove tag {tag}</span>
                             </button>
                           </Badge>
                         ))}
