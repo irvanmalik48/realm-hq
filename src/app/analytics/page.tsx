@@ -3,6 +3,7 @@
 import {
   Activity,
   ArrowUpRight,
+  BarChart3,
   Clock,
   Compass,
   FileText,
@@ -164,10 +165,11 @@ export default function AnalyticsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
               Web Analytics
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1">
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
               Live traffic, visitor telemetry, and engagement metrics for realm.
               across all pages and articles.
             </p>
