@@ -501,6 +501,11 @@ export default function PostsPage() {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   });
 
   const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
@@ -803,7 +808,10 @@ export default function PostsPage() {
                 </TableBody>
               </Table>
 
-              <DataTablePagination table={table} />
+              <DataTablePagination
+                table={table}
+                pageSizeOptions={[10, 20, 50, 100]}
+              />
             </>
           )}
         </div>
