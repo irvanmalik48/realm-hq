@@ -27,6 +27,13 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
     });
 
+    if (!res.ok) {
+      const errorData = await res
+        .json()
+        .catch(() => ({ error: "Failed to enable 2FA" }));
+      return NextResponse.json(errorData, { status: res.status });
+    }
+
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (err: unknown) {
