@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const apiBase =
+      process.env.API_URL ||
       env.NEXT_PUBLIC_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
       "http://localhost:8080";
@@ -23,13 +24,18 @@ export async function POST(req: NextRequest) {
       }),
     });
 
-    const authData = await loginRes.json();
     if (!loginRes.ok) {
+      const errorData = await loginRes.json().catch(() => null);
       return NextResponse.json(
-        { error: authData.message || authData.error || "Invalid credentials" },
+        {
+          error:
+            errorData?.message || errorData?.error || "Invalid credentials",
+        },
         { status: loginRes.status || 401 },
       );
     }
+
+    const authData = await loginRes.json().catch(() => null);
 
     // If Two-Factor Authentication is required, return challenge response immediately without session cookie
     if (authData.two_factor_required) {
