@@ -1,4 +1,5 @@
 "use client";
+"use no memo";
 
 import type { Table } from "@tanstack/react-table";
 import {
@@ -21,18 +22,44 @@ interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   pageSizeOptions?: number[];
   showSelectedCount?: boolean;
+  totalCount?: number;
 }
 
 export function DataTablePagination<TData>({
   table,
   pageSizeOptions = [10, 20, 30, 50, 100],
   showSelectedCount = true,
+  totalCount,
 }: DataTablePaginationProps<TData>) {
-  const selectedRows = table.getFilteredSelectedRowModel().rows.length;
-  const totalRows = table.getFilteredRowModel().rows.length;
-  const pageIndex = table.getState().pagination.pageIndex;
-  const pageSize = table.getState().pagination.pageSize;
-  const pageCount = table.getPageCount();
+  const pagination = table.getState().pagination;
+  const pageIndex = pagination?.pageIndex ?? 0;
+  const pageSize = pagination?.pageSize ?? 10;
+
+  const selectedRows =
+    table.getFilteredSelectedRowModel?.()?.rows?.length ??
+    Object.keys(table.getState().rowSelection ?? {}).length;
+  const totalRows =
+    totalCount !== undefined
+      ? totalCount
+      : (table.getRowCount?.() ??
+        table.getFilteredRowModel?.()?.rows?.length ??
+        table.getCoreRowModel?.()?.rows?.length ??
+        0);
+
+  const pageCount =
+    totalCount !== undefined
+      ? Math.max(1, Math.ceil(totalRows / Math.max(1, pageSize)))
+      : Math.max(1, table.getPageCount());
+
+  const canPreviousPage =
+    typeof table.getCanPreviousPage === "function"
+      ? table.getCanPreviousPage() || pageIndex > 0
+      : pageIndex > 0;
+
+  const canNextPage =
+    typeof table.getCanNextPage === "function"
+      ? table.getCanNextPage() || pageIndex < pageCount - 1
+      : pageIndex < pageCount - 1;
 
   const startRow = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
   const endRow = Math.min((pageIndex + 1) * pageSize, totalRows);
@@ -100,7 +127,7 @@ export function DataTablePagination<TData>({
             size="icon"
             className="hidden h-8 w-8 p-0 lg:flex cursor-pointer disabled:opacity-40"
             onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
+            disabled={!canPreviousPage}
             title="First page"
           >
             <span className="sr-only">Go to first page</span>
@@ -110,8 +137,8 @@ export function DataTablePagination<TData>({
             variant="outline"
             size="icon"
             className="h-8 w-8 p-0 cursor-pointer disabled:opacity-40"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.setPageIndex(Math.max(0, pageIndex - 1))}
+            disabled={!canPreviousPage}
             title="Previous page"
           >
             <span className="sr-only">Go to previous page</span>
@@ -121,8 +148,10 @@ export function DataTablePagination<TData>({
             variant="outline"
             size="icon"
             className="h-8 w-8 p-0 cursor-pointer disabled:opacity-40"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() =>
+              table.setPageIndex(Math.min(pageCount - 1, pageIndex + 1))
+            }
+            disabled={!canNextPage}
             title="Next page"
           >
             <span className="sr-only">Go to next page</span>
@@ -132,8 +161,8 @@ export function DataTablePagination<TData>({
             variant="outline"
             size="icon"
             className="hidden h-8 w-8 p-0 lg:flex cursor-pointer disabled:opacity-40"
-            onClick={() => table.setPageIndex(pageCount - 1)}
-            disabled={!table.getCanNextPage()}
+            onClick={() => table.setPageIndex(Math.max(0, pageCount - 1))}
+            disabled={!canNextPage}
             title="Last page"
           >
             <span className="sr-only">Go to last page</span>
