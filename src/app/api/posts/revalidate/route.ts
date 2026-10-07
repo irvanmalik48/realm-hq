@@ -28,9 +28,22 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return NextResponse.json(
+        {
+          success: false,
+          status: res.status,
+          error: "Revalidation failed",
+          data: errorData,
+        },
+        { status: res.status },
+      );
+    }
+
     const data = await res.json().catch(() => ({}));
     return NextResponse.json({
-      success: res.ok,
+      success: true,
       status: res.status,
       data,
     });
