@@ -579,7 +579,7 @@ function MessagesContent() {
         open={!!selectedSubmission}
         onOpenChange={(open) => !open && setSelectedSubmission(null)}
       >
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl" initialFocus={false}>
           <DialogHeader>
             <DialogTitle className="text-lg">
               Contact Inbound Message
@@ -604,12 +604,25 @@ function MessagesContent() {
                   <span className="text-muted-foreground block text-[11px]">
                     Email
                   </span>
-                  <a
-                    href={`mailto:${selectedSubmission.email}`}
-                    className="text-primary hover:underline"
-                  >
-                    {selectedSubmission.email}
-                  </a>
+                  <div className="flex items-center gap-1.5">
+                    <a
+                      href={`mailto:${selectedSubmission.email}`}
+                      className="text-primary hover:underline outline-none focus:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs"
+                    >
+                      {selectedSubmission.email}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedSubmission.email);
+                        toast.success("Email copied to clipboard");
+                      }}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors p-0.5 rounded"
+                      title="Copy email address"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <span className="text-muted-foreground block text-[11px]">
