@@ -86,6 +86,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/lib/auth/auth-context";
+import {
+  ALL_AVAILABLE_PERMISSIONS,
+  getPermissionLabel,
+  PERMISSION_CATEGORIES,
+} from "@/lib/auth/permissions";
 
 interface AdminUserRecord {
   id: string;
@@ -100,15 +105,6 @@ interface AdminUserRecord {
     avatar_url?: string;
   };
 }
-
-const AVAILABLE_PERMISSIONS = [
-  { id: "storage:write", label: "Upload & Modify Storage" },
-  { id: "storage:delete", label: "Delete Storage Objects" },
-  { id: "comments:moderate", label: "Moderate & Edit Comments" },
-  { id: "tokens:manage", label: "Issue & Revoke API Tokens" },
-  { id: "logs:delete", label: "Purge System Logs" },
-  { id: "system:telemetry", label: "Inspect Telemetry & DBPool" },
-];
 
 function AdminsContent() {
   const { user, admin: currentAdmin } = useAuth();
@@ -138,6 +134,10 @@ function AdminsContent() {
   const [newEmail, setNewEmail] = React.useState("");
   const [newPermissions, setNewPermissions] = React.useState<string[]>([]);
   const [isAdding, setIsAdding] = React.useState(false);
+  const newPermSet = React.useMemo(
+    () => new Set(newPermissions),
+    [newPermissions],
+  );
 
   // Edit Permissions modal
   const [editTarget, setEditTarget] = React.useState<AdminUserRecord | null>(
@@ -145,6 +145,10 @@ function AdminsContent() {
   );
   const [editPermissions, setEditPermissions] = React.useState<string[]>([]);
   const [isEditing, setIsEditing] = React.useState(false);
+  const editPermSet = React.useMemo(
+    () => new Set(editPermissions),
+    [editPermissions],
+  );
 
   // Remove Admin dialog
   const [removeTarget, setRemoveTarget] =
@@ -183,12 +187,32 @@ function AdminsContent() {
     );
   };
 
+  const toggleCategoryNewPermissions = (permIds: string[]) => {
+    const allSelected = permIds.every((id) => newPermSet.has(id));
+    if (allSelected) {
+      const removeSet = new Set(permIds);
+      setNewPermissions((prev) => prev.filter((p) => !removeSet.has(p)));
+    } else {
+      setNewPermissions((prev) => Array.from(new Set([...prev, ...permIds])));
+    }
+  };
+
   const toggleEditPermission = (permId: string) => {
     setEditPermissions((prev) =>
       prev.includes(permId)
         ? prev.filter((p) => p !== permId)
         : [...prev, permId],
     );
+  };
+
+  const toggleCategoryEditPermissions = (permIds: string[]) => {
+    const allSelected = permIds.every((id) => editPermSet.has(id));
+    if (allSelected) {
+      const removeSet = new Set(permIds);
+      setEditPermissions((prev) => prev.filter((p) => !removeSet.has(p)));
+    } else {
+      setEditPermissions((prev) => Array.from(new Set([...prev, ...permIds])));
+    }
   };
 
   const handleAddAdmin = async (e: React.FormEvent) => {
@@ -206,8 +230,10 @@ function AdminsContent() {
         }),
       });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to onboard admin");
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error || "Failed to onboard admin");
+      }
 
       toast.success("Administrator successfully added");
       setAddOpen(false);
@@ -237,9 +263,10 @@ function AdminsContent() {
         }),
       });
 
-      const json = await res.json();
-      if (!res.ok)
-        throw new Error(json.error || "Failed to update permissions");
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error || "Failed to update permissions");
+      }
 
       toast.success("Permissions updated atomically");
       setEditTarget(null);
@@ -262,8 +289,10 @@ function AdminsContent() {
         method: "DELETE",
       });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to revoke admin");
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        throw new Error(json?.error || "Failed to revoke admin");
+      }
 
       toast.success("Admin privileges revoked");
       setRemoveTarget(null);
@@ -475,6 +504,7 @@ function AdminsContent() {
                   key={p}
                   variant="outline"
                   className="text-[10px] font-mono px-1.5 py-0"
+                  title={getPermissionLabel(p)}
                 >
                   {p}
                 </Badge>
@@ -875,7 +905,7 @@ function AdminsContent() {
 
       {/* Add Administrator Modal */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-lg">Add New Administrator</DialogTitle>
             <DialogDescription className="text-xs">
@@ -884,8 +914,11 @@ function AdminsContent() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleAddAdmin} className="space-y-4 py-2">
-            <div className="space-y-1.5">
+          <form
+            onSubmit={handleAddAdmin}
+            className="space-y-4 py-2 flex-1 overflow-hidden flex flex-col"
+          >
+            <div className="space-y-1.5 shrink-0">
               <Label htmlFor="admin-email" className="text-xs font-semibold">
                 User Email Address
               </Label>
@@ -906,33 +939,106 @@ function AdminsContent() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">
-                Granular Permissions
-              </Label>
-              <div className="space-y-2 rounded-lg border border-border p-3 bg-muted/20">
-                {AVAILABLE_PERMISSIONS.map((perm) => (
-                  <div key={perm.id} className="flex items-center space-x-2.5">
-                    <Checkbox
-                      id={`perm-${perm.id}`}
-                      checked={newPermissions.includes(perm.id)}
-                      onCheckedChange={() => toggleNewPermission(perm.id)}
-                    />
-                    <label
-                      htmlFor={`perm-${perm.id}`}
-                      className="text-xs font-medium leading-none cursor-pointer"
+            <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">
+                  Granular Permissions ({newPermissions.length} selected)
+                </Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    className="h-6 text-[11px] px-2"
+                    onClick={() =>
+                      setNewPermissions(
+                        ALL_AVAILABLE_PERMISSIONS.map((p) => p.id),
+                      )
+                    }
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    className="h-6 text-[11px] px-2"
+                    onClick={() => setNewPermissions([])}
+                  >
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {PERMISSION_CATEGORIES.map((cat) => {
+                  const catPermIds = cat.permissions.map((p) => p.id);
+                  const allCatSelected = catPermIds.every((id) =>
+                    newPermSet.has(id),
+                  );
+
+                  return (
+                    <div
+                      key={cat.name}
+                      className="rounded-lg border border-border p-2.5 bg-muted/15 space-y-2"
                     >
-                      {perm.label}
-                      <span className="block text-[10px] text-muted-foreground font-mono mt-0.5">
-                        {perm.id}
-                      </span>
-                    </label>
-                  </div>
-                ))}
+                      <div className="flex items-center justify-between pb-1 border-b border-border/40">
+                        <div>
+                          <p className="text-xs font-semibold text-foreground">
+                            {cat.name}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {cat.description}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          className="h-6 text-[10px] px-1.5"
+                          onClick={() =>
+                            toggleCategoryNewPermissions(catPermIds)
+                          }
+                        >
+                          {allCatSelected ? "Deselect" : "Select"}
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 pt-1">
+                        {cat.permissions.map((perm) => (
+                          <div
+                            key={perm.id}
+                            className="flex items-start space-x-2.5"
+                          >
+                            <Checkbox
+                              id={`perm-${perm.id}`}
+                              checked={newPermSet.has(perm.id)}
+                              onCheckedChange={() =>
+                                toggleNewPermission(perm.id)
+                              }
+                              className="mt-0.5"
+                            />
+                            <label
+                              htmlFor={`perm-${perm.id}`}
+                              className="text-xs font-medium leading-tight cursor-pointer"
+                            >
+                              <span>{perm.label}</span>
+                              <span className="block text-[10px] text-muted-foreground">
+                                {perm.description}
+                              </span>
+                              <span className="block text-[9px] text-muted-foreground/80 font-mono mt-0.5">
+                                {perm.id}
+                              </span>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            <DialogFooter className="pt-2">
+            <DialogFooter className="pt-2 shrink-0">
               <Button
                 type="button"
                 variant="outline"
@@ -959,7 +1065,7 @@ function AdminsContent() {
         open={!!editTarget}
         onOpenChange={(open) => !open && setEditTarget(null)}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-lg">
               Edit Admin Permissions
@@ -972,35 +1078,106 @@ function AdminsContent() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
+          <div className="space-y-3 py-2 flex-1 overflow-y-auto pr-1">
+            <div className="flex items-center justify-between">
               <Label className="text-xs font-semibold">
-                Assigned Permissions
+                Assigned Permissions ({editPermissions.length} selected)
               </Label>
-              <div className="space-y-2 rounded-lg border border-border p-3 bg-muted/20">
-                {AVAILABLE_PERMISSIONS.map((perm) => (
-                  <div key={perm.id} className="flex items-center space-x-2.5">
-                    <Checkbox
-                      id={`edit-perm-${perm.id}`}
-                      checked={editPermissions.includes(perm.id)}
-                      onCheckedChange={() => toggleEditPermission(perm.id)}
-                    />
-                    <label
-                      htmlFor={`edit-perm-${perm.id}`}
-                      className="text-xs font-medium leading-none cursor-pointer"
-                    >
-                      {perm.label}
-                      <span className="block text-[10px] text-muted-foreground font-mono mt-0.5">
-                        {perm.id}
-                      </span>
-                    </label>
-                  </div>
-                ))}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  className="h-6 text-[11px] px-2"
+                  onClick={() =>
+                    setEditPermissions(
+                      ALL_AVAILABLE_PERMISSIONS.map((p) => p.id),
+                    )
+                  }
+                >
+                  Select All
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  className="h-6 text-[11px] px-2"
+                  onClick={() => setEditPermissions([])}
+                >
+                  Clear All
+                </Button>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              {PERMISSION_CATEGORIES.map((cat) => {
+                const catPermIds = cat.permissions.map((p) => p.id);
+                const allCatSelected = catPermIds.every((id) =>
+                  editPermSet.has(id),
+                );
+
+                return (
+                  <div
+                    key={cat.name}
+                    className="rounded-lg border border-border p-2.5 bg-muted/15 space-y-2"
+                  >
+                    <div className="flex items-center justify-between pb-1 border-b border-border/40">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">
+                          {cat.name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {cat.description}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        className="h-6 text-[10px] px-1.5"
+                        onClick={() =>
+                          toggleCategoryEditPermissions(catPermIds)
+                        }
+                      >
+                        {allCatSelected ? "Deselect" : "Select"}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 pt-1">
+                      {cat.permissions.map((perm) => (
+                        <div
+                          key={perm.id}
+                          className="flex items-start space-x-2.5"
+                        >
+                          <Checkbox
+                            id={`edit-perm-${perm.id}`}
+                            checked={editPermSet.has(perm.id)}
+                            onCheckedChange={() =>
+                              toggleEditPermission(perm.id)
+                            }
+                            className="mt-0.5"
+                          />
+                          <label
+                            htmlFor={`edit-perm-${perm.id}`}
+                            className="text-xs font-medium leading-tight cursor-pointer"
+                          >
+                            <span>{perm.label}</span>
+                            <span className="block text-[10px] text-muted-foreground">
+                              {perm.description}
+                            </span>
+                            <span className="block text-[9px] text-muted-foreground/80 font-mono mt-0.5">
+                              {perm.id}
+                            </span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
