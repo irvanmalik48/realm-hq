@@ -52,7 +52,11 @@ import * as React from "react";
 import { toast } from "sonner";
 import { DataTablePagination } from "@/components/data-table";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { TableSkeleton } from "@/components/layout/table-skeleton";
+import {
+  StorageGridSkeleton,
+  TableRowSkeleton,
+  TableSkeleton,
+} from "@/components/layout/table-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1517,9 +1521,38 @@ function StorageContent() {
 
         {/* File Manager Content Area */}
         {loading ? (
-          <div className="p-4">
-            <TableSkeleton rowCount={6} />
-          </div>
+          viewMode === "grid" ? (
+            <div className="p-4 sm:p-5">
+              <StorageGridSkeleton count={10} />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id} className="bg-muted/20">
+                      {headerGroup.headers.map((header) => (
+                        <TableHead key={header.id} className="text-xs">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  <TableRowSkeleton
+                    columnCount={columns.length}
+                    rowCount={pagination.pageSize || 8}
+                  />
+                </TableBody>
+              </Table>
+            </div>
+          )
         ) : filteredAndSortedFiles.length === 0 ? (
           /* Empty State */
           <div className="py-16 px-4 text-center flex flex-col items-center justify-center">
@@ -2207,6 +2240,7 @@ export default function StoragePage() {
       <React.Suspense
         fallback={
           <TableSkeleton
+            icon={HardDrive}
             title="File Storage"
             description="Manage uploaded media, documents, and bucket assets"
             rowCount={8}
