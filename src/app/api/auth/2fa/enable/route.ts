@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const apiBase =
+      process.env.API_URL ||
       env.NEXT_PUBLIC_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
       "http://localhost:8080";
@@ -34,8 +35,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(errorData, { status: res.status });
     }
 
-    const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
+    const data = await res.json().catch(() => null);
+    return NextResponse.json(data || {}, { status: res.status });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to enable 2FA";
     return NextResponse.json({ error: message }, { status: 500 });
