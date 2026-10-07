@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Plus, Save, Send, X } from "lucide-react";
+import { ArrowLeft, FileEdit, Plus, Save, Send, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -105,10 +105,11 @@ export default function NewPostPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <FileEdit className="h-5 w-5 text-primary" />
               Create New Article
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1">
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
               Compose a new post using the WYSIWYG markdown editor.
             </p>
           </div>
