@@ -5,6 +5,7 @@ import {
   Cpu,
   Database,
   HardDrive,
+  LayoutDashboard,
   Mail,
   RefreshCw,
   TrendingDown,
@@ -197,10 +198,11 @@ export default function DashboardPage() {
         {/* Top Control Banner */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <LayoutDashboard className="h-5 w-5 text-primary" />
               Command Centre
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Live system status, storage overview, and recent activity.
             </p>
           </div>
