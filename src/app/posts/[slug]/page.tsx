@@ -52,14 +52,85 @@ import {
   updatePost,
 } from "@/lib/api/posts";
 
+function PostEditSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <FileEdit className="h-5 w-5 text-primary" />
+            <Skeleton className="h-6 w-48" />
+          </h2>
+          <Skeleton className="h-3.5 w-32 mt-1" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-20 rounded-md" />
+          <Skeleton className="h-8 w-20 rounded-md" />
+          <Skeleton className="h-8 w-28 rounded-md" />
+        </div>
+      </div>
+
+      <div className="flex flex-col lg:flex-row items-start gap-6 pb-12">
+        <div className="flex-1 w-full flex flex-col gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-20" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-[550px] w-full rounded-md" />
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <Skeleton className="h-4 w-24" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-5 w-9 rounded-full" />
+              </div>
+              <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                <Skeleton className="h-8 w-full rounded-md" />
+                <Skeleton className="h-8 w-full rounded-md" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <Skeleton className="h-4 w-28" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1.5">
+                <Skeleton className="h-3.5 w-16" />
+                <Skeleton className="h-9 w-full rounded-md" />
+              </div>
+              <div className="space-y-1.5">
+                <Skeleton className="h-3.5 w-16" />
+                <Skeleton className="h-9 w-full rounded-md" />
+              </div>
+              <div className="space-y-1.5">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-20 w-full rounded-md" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EditPostPage() {
   return (
     <React.Suspense
       fallback={
         <DashboardShell>
-          <div className="flex h-[50vh] items-center justify-center">
-            <Skeleton className="h-48 w-full max-w-xl rounded-xl" />
-          </div>
+          <PostEditSkeleton />
         </DashboardShell>
       }
     >
@@ -196,13 +267,7 @@ function EditPostContent() {
   if (isLoading) {
     return (
       <DashboardShell>
-        <div className="flex flex-col gap-6">
-          <Skeleton className="h-10 w-48" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Skeleton className="h-[500px] lg:col-span-2" />
-            <Skeleton className="h-[400px]" />
-          </div>
-        </div>
+        <PostEditSkeleton />
       </DashboardShell>
     );
   }
