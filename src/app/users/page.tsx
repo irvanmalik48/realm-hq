@@ -160,10 +160,29 @@ export default function UsersPage() {
 
       // Provider filter
       if (providerFilter !== "all") {
-        const allProviders = [u.provider, ...(u.connected_providers || [])].map(
-          (p) => p.toLowerCase(),
-        );
-        if (!allProviders.includes(providerFilter.toLowerCase())) return false;
+        if (providerFilter === "local") {
+          const isLocal =
+            u.has_password ||
+            u.provider?.toLowerCase() === "local" ||
+            u.connected_providers?.some((p) => p.toLowerCase() === "local");
+          if (!isLocal) return false;
+        } else if (providerFilter === "google") {
+          const hasGoogle =
+            u.provider?.toLowerCase() === "google" ||
+            u.connected_providers?.some((p) => p.toLowerCase() === "google") ||
+            u.connected_accounts?.some(
+              (a) => a.provider.toLowerCase() === "google",
+            );
+          if (!hasGoogle) return false;
+        } else if (providerFilter === "github") {
+          const hasGitHub =
+            u.provider?.toLowerCase() === "github" ||
+            u.connected_providers?.some((p) => p.toLowerCase() === "github") ||
+            u.connected_accounts?.some(
+              (a) => a.provider.toLowerCase() === "github",
+            );
+          if (!hasGitHub) return false;
+        }
       }
 
       // 2FA filter
@@ -179,14 +198,41 @@ export default function UsersPage() {
     const total = users.length;
     const with2FA = users.filter((u) => u.two_factor_enabled).length;
     const rate2FA = total > 0 ? Math.round((with2FA / total) * 100) : 0;
+    const googleUsers = users.filter(
+      (u) =>
+        u.provider?.toLowerCase() === "google" ||
+        u.connected_providers?.some((p) => p.toLowerCase() === "google") ||
+        u.connected_accounts?.some(
+          (a) => a.provider.toLowerCase() === "google",
+        ),
+    ).length;
+    const githubUsers = users.filter(
+      (u) =>
+        u.provider?.toLowerCase() === "github" ||
+        u.connected_providers?.some((p) => p.toLowerCase() === "github") ||
+        u.connected_accounts?.some(
+          (a) => a.provider.toLowerCase() === "github",
+        ),
+    ).length;
     const oauthUsers = users.filter(
       (u) =>
-        u.provider !== "local" ||
-        (u.connected_providers && u.connected_providers.length > 0),
+        (u.provider && u.provider.toLowerCase() !== "local") ||
+        (u.connected_providers && u.connected_providers.length > 0) ||
+        (u.connected_accounts && u.connected_accounts.length > 0),
     ).length;
-    const localUsers = users.filter((u) => u.has_password).length;
+    const localUsers = users.filter(
+      (u) => u.has_password || u.provider?.toLowerCase() === "local",
+    ).length;
 
-    return { total, with2FA, rate2FA, oauthUsers, localUsers };
+    return {
+      total,
+      with2FA,
+      rate2FA,
+      oauthUsers,
+      localUsers,
+      googleUsers,
+      githubUsers,
+    };
   }, [users]);
 
   // Delete Single User
@@ -377,21 +423,45 @@ export default function UsersPage() {
         header: "Authentication",
         cell: ({ row }) => {
           const u = row.original;
-          const providers = Array.from(
-            new Set([u.provider, ...(u.connected_providers || [])]),
-          ).filter(Boolean);
+          const allList: string[] = [];
+          if (u.has_password || u.provider?.toLowerCase() === "local") {
+            allList.push("Password");
+          }
+          if (u.provider && u.provider.toLowerCase() !== "local") {
+            allList.push(u.provider);
+          }
+          if (u.connected_providers) {
+            for (const p of u.connected_providers) {
+              if (p.toLowerCase() !== "local") allList.push(p);
+            }
+          }
+          if (u.connected_accounts) {
+            for (const a of u.connected_accounts) {
+              if (a.provider && a.provider.toLowerCase() !== "local") {
+                allList.push(a.provider);
+              }
+            }
+          }
+          const uniqueProviders = Array.from(
+            new Set(allList.map((p) => p.toLowerCase())),
+          ).map((p) => {
+            if (p === "password") return "Password";
+            if (p === "github") return "GitHub";
+            if (p === "google") return "Google";
+            return p.charAt(0).toUpperCase() + p.slice(1);
+          });
 
           return (
             <div className="flex flex-wrap gap-1 items-center">
-              {providers.map((p) => {
-                const isLocal = p.toLowerCase() === "local";
+              {uniqueProviders.map((p) => {
+                const isPassword = p === "Password";
                 return (
                   <Badge
                     key={p}
-                    variant={isLocal ? "outline" : "secondary"}
-                    className="text-[10px] uppercase font-mono px-1.5 py-0 capitalize"
+                    variant={isPassword ? "outline" : "secondary"}
+                    className="text-[10px] font-mono px-1.5 py-0"
                   >
-                    {isLocal ? "Password" : p}
+                    {p}
                   </Badge>
                 );
               })}
@@ -666,99 +736,193 @@ export default function UsersPage() {
           </Card>
         </div>
 
-        {/* Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-          <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <div className="relative flex-1 sm:max-w-xs">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, @username, email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 text-xs h-9"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
-                  aria-label="Clear search input"
+        {/* User Directory Table Card */}
+        <Card className="overflow-hidden">
+          <CardHeader className="px-4 py-3 border-b border-border bg-card/40 space-y-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, @username, email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 text-xs h-9"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                    className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <Select
+                  value={providerFilter}
+                  onValueChange={(val) => {
+                    if (val) setProviderFilter(val);
+                  }}
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+                  <SelectTrigger
+                    aria-label="Filter by authentication provider"
+                    className="h-9 w-full sm:w-44 text-xs bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <KeyRound className="size-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground font-normal">
+                        Provider:
+                      </span>
+                      <SelectValue>
+                        {(val) => {
+                          if (val === "local") {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 font-medium text-amber-500">
+                                <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                                Password
+                              </span>
+                            );
+                          }
+                          if (val === "google") {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 font-medium text-blue-500">
+                                <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
+                                Google
+                              </span>
+                            );
+                          }
+                          if (val === "github") {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 font-medium text-purple-400">
+                                <span className="size-1.5 rounded-full bg-purple-400 shrink-0" />
+                                GitHub
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="font-medium text-foreground">
+                              All
+                            </span>
+                          );
+                        }}
+                      </SelectValue>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent align="start" className="min-w-[170px]">
+                    <SelectItem value="all" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-muted-foreground/30" />
+                        All Providers ({users.length})
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="local" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-amber-500" />
+                        Local Password ({metrics.localUsers})
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="google" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-blue-500" />
+                        Google Account ({metrics.googleUsers})
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="github" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-purple-400" />
+                        GitHub Account ({metrics.githubUsers})
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={twoFactorFilter}
+                  onValueChange={(val) => {
+                    if (val) setTwoFactorFilter(val);
+                  }}
+                >
+                  <SelectTrigger
+                    aria-label="Filter by two-factor authentication status"
+                    className="h-9 w-full sm:w-36 text-xs bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <ShieldCheck className="size-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground font-normal">
+                        2FA:
+                      </span>
+                      <SelectValue>
+                        {(val) => {
+                          if (val === "enabled") {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-500">
+                                <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                Enabled
+                              </span>
+                            );
+                          }
+                          if (val === "disabled") {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 font-medium text-muted-foreground">
+                                <span className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0" />
+                                Disabled
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="font-medium text-foreground">
+                              All
+                            </span>
+                          );
+                        }}
+                      </SelectValue>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent align="start" className="min-w-[160px]">
+                    <SelectItem value="all" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-muted-foreground/30" />
+                        All 2FA States ({users.length})
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="enabled" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        2FA Enabled ({metrics.with2FA})
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="disabled" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-muted-foreground/60" />
+                        2FA Disabled ({users.length - metrics.with2FA})
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {(searchQuery ||
+                  providerFilter !== "all" ||
+                  twoFactorFilter !== "all") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setProviderFilter("all");
+                      setTwoFactorFilter("all");
+                    }}
+                    className="h-9 text-xs px-2.5 cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-3.5 mr-1" />
+                    Reset
+                  </Button>
+                )}
+              </div>
             </div>
-
-            <Select
-              value={providerFilter}
-              onValueChange={(val) => setProviderFilter(val ?? "all")}
-            >
-              <SelectTrigger
-                aria-label="Filter by authentication provider"
-                className="w-full sm:w-44 text-xs h-9"
-              >
-                <SelectValue placeholder="Filter Provider" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">
-                  All Providers
-                </SelectItem>
-                <SelectItem value="local" className="text-xs">
-                  Local Password
-                </SelectItem>
-                <SelectItem value="google" className="text-xs">
-                  Google Account
-                </SelectItem>
-                <SelectItem value="github" className="text-xs">
-                  GitHub Account
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={twoFactorFilter}
-              onValueChange={(val) => setTwoFactorFilter(val ?? "all")}
-            >
-              <SelectTrigger
-                aria-label="Filter by two-factor authentication status"
-                className="w-full sm:w-40 text-xs h-9"
-              >
-                <SelectValue placeholder="Filter 2FA" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-xs">
-                  All 2FA States
-                </SelectItem>
-                <SelectItem value="enabled" className="text-xs">
-                  2FA Enabled
-                </SelectItem>
-                <SelectItem value="disabled" className="text-xs">
-                  2FA Disabled
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            {(searchQuery ||
-              providerFilter !== "all" ||
-              twoFactorFilter !== "all") && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery("");
-                  setProviderFilter("all");
-                  setTwoFactorFilter("all");
-                }}
-                className="h-9 text-xs px-2 cursor-pointer text-muted-foreground hover:text-foreground"
-              >
-                Reset filters
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Data Table */}
-        <Card className="rounded-lg border border-border bg-card">
+          </CardHeader>
           <CardContent className="p-0">
             {loading ? (
               <TableSkeleton columnCount={6} rowCount={8} />
