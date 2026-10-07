@@ -13,6 +13,7 @@ export interface UserDTO {
   provider: string;
   two_factor_enabled: boolean;
   has_password: boolean;
+  is_active: boolean;
   connected_providers: string[];
   connected_accounts: OAuthAccountDTO[];
   created_at: string;
@@ -51,6 +52,34 @@ export async function fetchUsers(params?: {
     const errorData = await res.json().catch(() => null);
     throw new Error(
       errorData?.error || `Failed to fetch users (${res.status})`,
+    );
+  }
+
+  return res.json();
+}
+
+export async function updateUser(
+  id: string,
+  data: {
+    username?: string;
+    full_name?: string;
+    email?: string;
+    is_active?: boolean;
+  },
+): Promise<{ status: string; user: UserDTO }> {
+  const res = await fetch(`/api/users/${id}`, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(
+      errorData?.error || `Failed to update user (${res.status})`,
     );
   }
 
