@@ -677,11 +677,16 @@ function MessagesContent() {
               </div>
 
               {selectedSubmission.user_agent && (
-                <div className="text-[11px] text-muted-foreground flex items-start gap-1.5 pt-1">
-                  <Monitor className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  <span className="truncate">
-                    {selectedSubmission.user_agent}
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                    <Monitor className="h-3.5 w-3.5 shrink-0" />
+                    User Agent
                   </span>
+                  <Input
+                    readOnly
+                    value={selectedSubmission.user_agent}
+                    className="text-xs font-mono h-8 bg-muted/20 text-muted-foreground w-full min-w-0"
+                  />
                 </div>
               )}
             </div>
