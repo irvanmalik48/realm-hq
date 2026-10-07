@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Terminal,
   UserCheck,
+  Users,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -93,6 +94,12 @@ const navItems = [
     superadminOnly: true,
   },
   {
+    title: "Users",
+    href: "/users",
+    icon: Users,
+    permission: "users:read",
+  },
+  {
     title: "Performance",
     href: "/telemetry",
     icon: Activity,
@@ -106,7 +113,7 @@ const navItems = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { user, admin, logout } = useAuth();
+  const { user, admin, logout, hasPermission } = useAuth();
   const { state, isMobile, setOpenMobile } = useSidebar();
 
   const handleNavClick = React.useCallback(() => {
@@ -117,6 +124,13 @@ export function AppSidebar() {
 
   const filteredItems = navItems.filter((item) => {
     if (item.superadminOnly && !admin?.is_superadmin) {
+      return false;
+    }
+    if (
+      "permission" in item &&
+      item.permission &&
+      !hasPermission(item.permission)
+    ) {
       return false;
     }
     return true;
