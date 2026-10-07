@@ -48,6 +48,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "Administrators",
     subtitle: "Manage admin accounts, roles, and permissions",
   },
+  "/users": {
+    title: "Platform Users",
+    subtitle: "Manage registered user accounts, roles, and status",
+  },
   "/telemetry": {
     title: "System Performance",
     subtitle: "Live database connections, server load, and memory usage",
