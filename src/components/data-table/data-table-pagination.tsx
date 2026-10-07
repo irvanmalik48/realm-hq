@@ -2,6 +2,7 @@
 "use no memo";
 
 import type { Table } from "@tanstack/react-table";
+import { cn } from "cn";
 import {
   ChevronLeft,
   ChevronRight,
@@ -23,6 +24,7 @@ interface DataTablePaginationProps<TData> {
   pageSizeOptions?: number[];
   showSelectedCount?: boolean;
   totalCount?: number;
+  className?: string;
 }
 
 export function DataTablePagination<TData>({
@@ -30,6 +32,7 @@ export function DataTablePagination<TData>({
   pageSizeOptions = [10, 20, 30, 50, 100],
   showSelectedCount = true,
   totalCount,
+  className,
 }: DataTablePaginationProps<TData>) {
   const pagination = table.getState().pagination;
   const pageIndex = pagination?.pageIndex ?? 0;
@@ -73,7 +76,12 @@ export function DataTablePagination<TData>({
   }, [pageSizeOptions, pageSize]);
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3 sm:px-4 py-3 border-t border-border bg-card/40">
+    <div
+      className={cn(
+        "flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3 sm:px-4 py-3 border-t border-border bg-card/40",
+        className,
+      )}
+    >
       <div className="flex items-center gap-2 text-xs text-muted-foreground w-full sm:w-auto justify-between sm:justify-start">
         {showSelectedCount && selectedRows > 0 ? (
           <span className="font-medium text-foreground">
