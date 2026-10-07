@@ -7,6 +7,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   type RowSelectionState,
   type SortingState,
   useReactTable,
@@ -114,6 +115,16 @@ function TokensContent() {
     "all" | "active" | "revoked"
   >("all");
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  React.useEffect(() => {
+    void globalFilter;
+    void statusFilter;
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [globalFilter, statusFilter]);
 
   // Create modal state
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -522,19 +533,16 @@ function TokensContent() {
     state: {
       sorting,
       rowSelection,
+      pagination,
     },
     enableRowSelection: (row) => !row.original.is_revoked,
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
   });
 
   const selectedCount = Object.keys(rowSelection).length;
@@ -801,6 +809,7 @@ function TokensContent() {
           {/* Configurable Pagination Controls */}
           <DataTablePagination
             table={table}
+            totalCount={filteredData.length}
             pageSizeOptions={[10, 20, 50, 100]}
           />
         </CardContent>
