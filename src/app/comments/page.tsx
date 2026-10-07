@@ -8,6 +8,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   type RowSelectionState,
   type SortingState,
   useReactTable,
@@ -282,6 +283,15 @@ function CommentsContent() {
   );
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  React.useEffect(() => {
+    void globalFilter;
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [globalFilter]);
 
   // Single Item Modals
   const [editTarget, setEditTarget] = React.useState<CommentItem | null>(null);
@@ -869,19 +879,16 @@ function CommentsContent() {
       sorting,
       columnFilters,
       rowSelection,
+      pagination,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
   });
 
   const selectedCount = Object.keys(rowSelection).length;
@@ -1599,6 +1606,7 @@ function CommentsContent() {
 
           <DataTablePagination
             table={table}
+            totalCount={filteredFlatData.length}
             pageSizeOptions={[10, 20, 50, 100]}
           />
         </Card>
