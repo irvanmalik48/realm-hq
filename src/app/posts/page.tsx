@@ -96,7 +96,7 @@ export default function PostsPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [sorting, setSorting] = React.useState<SortingState>([
-    { id: "created_at", desc: true },
+    { id: "updated_at", desc: true },
   ]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -394,6 +394,35 @@ export default function PostsPage() {
             <span>{row.original.reading_time || "1 min read"}</span>
           </div>
         ),
+      },
+      {
+        accessorKey: "updated_at",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Last Edited" />
+        ),
+        cell: ({ row }) => {
+          const dateStr = row.original.updated_at || row.original.created_at;
+          if (!dateStr)
+            return <span className="text-xs text-muted-foreground">-</span>;
+          const date = new Date(dateStr);
+          return (
+            <div className="flex flex-col text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {date.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+              <span className="text-[11px]">
+                {date.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+          );
+        },
       },
       {
         accessorKey: "created_at",
