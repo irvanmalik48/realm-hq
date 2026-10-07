@@ -735,7 +735,7 @@ function LogsContent() {
           {/* Configurable Pagination Controls */}
           <DataTablePagination
             table={table}
-            pageSizeOptions={[15, 25, 50, 100]}
+            pageSizeOptions={[10, 20, 50, 100]}
           />
         </CardContent>
       </Card>
