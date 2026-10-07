@@ -766,9 +766,12 @@ export default function UsersPage() {
     <DashboardShell>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-border">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Platform Users</h1>
+            <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Platform Users
+            </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               Manage registered user accounts, social authentication links,
               security posture, and administrative roles.
