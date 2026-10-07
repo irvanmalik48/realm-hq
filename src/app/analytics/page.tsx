@@ -28,6 +28,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { TableRowSkeleton } from "@/components/layout/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -445,31 +446,28 @@ export default function AnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {isLoading ? (
-                <div className="p-4 flex flex-col gap-2">
-                  <Skeleton className="h-6 w-full" />
-                  <Skeleton className="h-6 w-full" />
-                  <Skeleton className="h-6 w-full" />
-                </div>
-              ) : !data?.top_pages || data.top_pages.length === 0 ? (
-                <div className="p-6 text-center text-xs text-muted-foreground">
-                  No pages tracked yet.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader className="bg-muted/40">
+              <Table>
+                <TableHeader className="bg-muted/40">
+                  <TableRow>
+                    <TableHead className="text-xs">Page Path</TableHead>
+                    <TableHead className="text-xs text-right">Views</TableHead>
+                    <TableHead className="text-xs text-right">Unique</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRowSkeleton columnCount={3} rowCount={4} />
+                  ) : !data?.top_pages || data.top_pages.length === 0 ? (
                     <TableRow>
-                      <TableHead className="text-xs">Page Path</TableHead>
-                      <TableHead className="text-xs text-right">
-                        Views
-                      </TableHead>
-                      <TableHead className="text-xs text-right">
-                        Unique
-                      </TableHead>
+                      <TableCell
+                        colSpan={3}
+                        className="p-6 text-center text-xs text-muted-foreground"
+                      >
+                        No pages tracked yet.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.top_pages.map((p) => (
+                  ) : (
+                    data.top_pages.map((p) => (
                       <TableRow key={p.path} className="hover:bg-muted/30">
                         <TableCell className="font-mono text-xs font-medium text-foreground py-2.5">
                           {p.path}
@@ -481,10 +479,10 @@ export default function AnalyticsPage() {
                           {p.unique}
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
 
@@ -497,31 +495,28 @@ export default function AnalyticsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {isLoading ? (
-                <div className="p-4 flex flex-col gap-2">
-                  <Skeleton className="h-6 w-full" />
-                  <Skeleton className="h-6 w-full" />
-                  <Skeleton className="h-6 w-full" />
-                </div>
-              ) : !data?.top_posts || data.top_posts.length === 0 ? (
-                <div className="p-6 text-center text-xs text-muted-foreground">
-                  No article visits recorded yet.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader className="bg-muted/40">
+              <Table>
+                <TableHeader className="bg-muted/40">
+                  <TableRow>
+                    <TableHead className="text-xs">Article</TableHead>
+                    <TableHead className="text-xs text-right">Views</TableHead>
+                    <TableHead className="text-xs text-right">Unique</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRowSkeleton columnCount={3} rowCount={4} />
+                  ) : !data?.top_posts || data.top_posts.length === 0 ? (
                     <TableRow>
-                      <TableHead className="text-xs">Article</TableHead>
-                      <TableHead className="text-xs text-right">
-                        Views
-                      </TableHead>
-                      <TableHead className="text-xs text-right">
-                        Unique
-                      </TableHead>
+                      <TableCell
+                        colSpan={3}
+                        className="p-6 text-center text-xs text-muted-foreground"
+                      >
+                        No article visits recorded yet.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.top_posts.map((post) => (
+                  ) : (
+                    data.top_posts.map((post) => (
                       <TableRow key={post.slug} className="hover:bg-muted/30">
                         <TableCell className="text-xs py-2.5">
                           <Link
@@ -541,10 +536,10 @@ export default function AnalyticsPage() {
                           {post.unique}
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </div>
@@ -672,26 +667,31 @@ export default function AnalyticsPage() {
             </span>
           </CardHeader>
           <CardContent className="p-0">
-            {!data?.recent_views || data.recent_views.length === 0 ? (
-              <div className="p-6 text-center text-xs text-muted-foreground">
-                No recent visits recorded.
-              </div>
-            ) : (
-              <Table className="min-w-[650px]">
-                <TableHeader className="bg-muted/40">
+            <Table className="min-w-[650px]">
+              <TableHeader className="bg-muted/40">
+                <TableRow>
+                  <TableHead className="text-xs">Path</TableHead>
+                  <TableHead className="text-xs">Referrer</TableHead>
+                  <TableHead className="text-xs">Client Environment</TableHead>
+                  <TableHead className="text-xs text-right">
+                    Timestamp
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRowSkeleton columnCount={4} rowCount={5} />
+                ) : !data?.recent_views || data.recent_views.length === 0 ? (
                   <TableRow>
-                    <TableHead className="text-xs">Path</TableHead>
-                    <TableHead className="text-xs">Referrer</TableHead>
-                    <TableHead className="text-xs">
-                      Client Environment
-                    </TableHead>
-                    <TableHead className="text-xs text-right">
-                      Timestamp
-                    </TableHead>
+                    <TableCell
+                      colSpan={4}
+                      className="p-6 text-center text-xs text-muted-foreground"
+                    >
+                      No recent visits recorded.
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.recent_views.map((visit) => {
+                ) : (
+                  data.recent_views.map((visit) => {
                     const date = new Date(visit.created_at);
                     return (
                       <TableRow key={visit.id} className="hover:bg-muted/30">
@@ -726,10 +726,10 @@ export default function AnalyticsPage() {
                         </TableCell>
                       </TableRow>
                     );
-                  })}
-                </TableBody>
-              </Table>
-            )}
+                  })
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
