@@ -1042,7 +1042,7 @@ function CommentsContent() {
       </div>
 
       {loading && data.length === 0 ? (
-        <TableSkeleton rowCount={6} />
+        <TableSkeleton rowCount={6} hideHeader />
       ) : viewMode === "by-post" ? (
         /* ========================================================================= */
         /* BY-POST VIEW: EITHER CATALOG OR SELECTED POST DISCUSSION THREAD */
