@@ -17,6 +17,7 @@ import {
   Copy,
   Download,
   Eye,
+  Mail,
   Monitor,
   MoreHorizontal,
   RefreshCw,
@@ -416,10 +417,11 @@ function MessagesContent() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Mail className="h-5 w-5 text-primary" />
             Contact Submissions
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Inquiries and messages submitted through the website contact form.
           </p>
         </div>
