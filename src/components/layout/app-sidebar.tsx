@@ -210,7 +210,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 group-data-[collapsible=icon]:p-2 overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)]">
-        <div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 w-full transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)]">
+        <div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 w-full transition-[gap] duration-300 ease-[cubic-bezier(0.2,0,0,1)]">
           {/* User profile / Avatar */}
           <div className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
             <Tooltip>
