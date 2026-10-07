@@ -7,6 +7,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   type RowSelectionState,
   type SortingState,
   useReactTable,
@@ -89,6 +90,15 @@ function MessagesContent() {
   ]);
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 15,
+  });
+
+  React.useEffect(() => {
+    void globalFilter;
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [globalFilter]);
 
   const [selectedSubmission, setSelectedSubmission] =
     React.useState<Submission | null>(null);
@@ -388,19 +398,16 @@ function MessagesContent() {
     state: {
       sorting,
       rowSelection,
+      pagination,
     },
     enableRowSelection: true,
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 15,
-      },
-    },
   });
 
   const selectedCount = Object.keys(rowSelection).length;
@@ -542,6 +549,7 @@ function MessagesContent() {
           {/* Configurable Pagination Controls */}
           <DataTablePagination
             table={table}
+            totalCount={filteredData.length}
             pageSizeOptions={[10, 15, 25, 50, 100]}
           />
         </CardContent>
