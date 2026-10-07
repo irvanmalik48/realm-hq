@@ -7,6 +7,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   type RowSelectionState,
   type SortingState,
   useReactTable,
@@ -121,6 +122,16 @@ function AdminsContent() {
     "all" | "superadmin" | "staff"
   >("all");
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  React.useEffect(() => {
+    void globalFilter;
+    void roleFilter;
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [globalFilter, roleFilter]);
 
   // Add Admin modal
   const [addOpen, setAddOpen] = React.useState(false);
@@ -564,19 +575,16 @@ function AdminsContent() {
     state: {
       sorting,
       rowSelection,
+      pagination,
     },
     enableRowSelection: (row) => !row.original.is_superadmin,
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
   });
 
   const selectedCount = Object.keys(rowSelection).length;
@@ -832,6 +840,7 @@ function AdminsContent() {
           {/* Configurable Pagination Controls */}
           <DataTablePagination
             table={table}
+            totalCount={filteredData.length}
             pageSizeOptions={[10, 20, 50, 100]}
           />
         </CardContent>
