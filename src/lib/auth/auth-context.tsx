@@ -86,9 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(credentials),
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        return { success: false, error: data.error || "Login failed" };
+        const errorData = await res.json().catch(() => null);
+        return { success: false, error: errorData?.error || "Login failed" };
+      }
+
+      const data = await res.json().catch(() => null);
+      if (!data) {
+        return { success: false, error: "Empty response from server" };
       }
 
       if (data.two_factor_required) {
@@ -113,15 +118,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/auth/2fa/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          temp_token: data.tempToken,
+          tempToken: data.tempToken,
+          code: data.code,
+        }),
       });
 
-      const resData = await res.json();
       if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
         return {
           success: false,
-          error: resData.error || "Verification failed",
+          error: errorData?.error || "Verification failed",
         };
+      }
+
+      const resData = await res.json().catch(() => null);
+      if (!resData) {
+        return { success: false, error: "Empty response from server" };
       }
 
       setUser(resData.user);
