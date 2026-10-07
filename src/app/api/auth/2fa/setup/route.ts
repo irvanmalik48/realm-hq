@@ -24,6 +24,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    if (!res.ok) {
+      const errorData = await res
+        .json()
+        .catch(() => ({ error: "Failed to initiate 2FA setup" }));
+      return NextResponse.json(errorData, { status: res.status });
+    }
+
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (err: unknown) {
