@@ -40,7 +40,7 @@ import {
   DataTablePagination,
 } from "@/components/data-table";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { TableSkeleton } from "@/components/layout/table-skeleton";
+import { TableRowSkeleton } from "@/components/layout/table-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -795,65 +795,75 @@ export default function PostsPage() {
 
         {/* Posts Table */}
         <div className="rounded-lg border border-border bg-card shadow-xs overflow-hidden">
-          {isLoading ? (
-            <TableSkeleton rowCount={5} columnCount={6} />
-          ) : filteredData.length === 0 ? (
-            <Empty className="py-16">
-              <EmptyHeader>
-                <EmptyTitle>No articles found</EmptyTitle>
-                <EmptyDescription>
-                  {searchQuery || statusFilter !== "all" || tagFilter !== "all"
-                    ? "Try adjusting your search criteria or clear active filters."
-                    : "No articles found in the database. Create your first post using the button above."}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <>
-              <Table className="min-w-[750px]">
-                <TableHeader className="bg-muted/40">
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                      className="hover:bg-muted/30 transition-colors"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
+          <Table className="min-w-[750px]">
+            <TableHeader className="bg-muted/40">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
                           )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
+                    </TableHead>
                   ))}
-                </TableBody>
-              </Table>
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRowSkeleton
+                  columnCount={columns.length}
+                  rowCount={pagination.pageSize || 8}
+                />
+              ) : table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-48 text-center"
+                  >
+                    <Empty className="py-12 border-0">
+                      <EmptyHeader>
+                        <EmptyTitle>No articles found</EmptyTitle>
+                        <EmptyDescription>
+                          {searchQuery ||
+                          statusFilter !== "all" ||
+                          tagFilter !== "all"
+                            ? "Try adjusting your search criteria or clear active filters."
+                            : "No articles found in the database. Create your first post using the button above."}
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
 
-              <DataTablePagination
-                table={table}
-                totalCount={filteredData.length}
-                pageSizeOptions={[10, 20, 50, 100]}
-              />
-            </>
-          )}
+          <DataTablePagination
+            table={table}
+            totalCount={filteredData.length}
+            pageSizeOptions={[10, 20, 50, 100]}
+          />
         </div>
 
         {/* Floating Bulk Actions Bar */}
