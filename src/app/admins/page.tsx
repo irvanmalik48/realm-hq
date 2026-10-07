@@ -830,7 +830,10 @@ function AdminsContent() {
           </Table>
 
           {/* Configurable Pagination Controls */}
-          <DataTablePagination table={table} pageSizeOptions={[10, 20, 50]} />
+          <DataTablePagination
+            table={table}
+            pageSizeOptions={[10, 20, 50, 100]}
+          />
         </CardContent>
       </Card>
 
