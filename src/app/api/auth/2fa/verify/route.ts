@@ -10,31 +10,44 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const apiBase =
+      process.env.API_URL ||
       env.NEXT_PUBLIC_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
       "http://localhost:8080";
+
+    const tempToken = body.temp_token || body.tempToken || "";
+    const code = body.code || "";
+
+    if (!tempToken || !code) {
+      return NextResponse.json(
+        { error: "Temporary token and 2FA code are required." },
+        { status: 400 },
+      );
+    }
 
     const verifyRes = await fetch(`${apiBase}/v1/auth/2fa/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        temp_token: body.temp_token || "",
-        code: body.code || "",
+        temp_token: tempToken,
+        code,
       }),
     });
 
-    const authData = await verifyRes.json();
     if (!verifyRes.ok) {
+      const errorData = await verifyRes.json().catch(() => null);
       return NextResponse.json(
         {
           error:
-            authData.message ||
-            authData.error ||
+            errorData?.message ||
+            errorData?.error ||
             "Invalid two-factor authentication code or recovery code.",
         },
         { status: verifyRes.status || 401 },
       );
     }
+
+    const authData = await verifyRes.json().catch(() => null);
 
     const token = authData.token;
     const user = authData.user;
