@@ -89,11 +89,13 @@ function EditPostContent() {
   const [isPublished, setIsPublished] = React.useState(true);
 
   React.useEffect(() => {
+    let ignore = false;
     async function loadPost() {
       if (!slugParam) return;
       try {
         setIsLoading(true);
         const data = await fetchPostBySlug(slugParam);
+        if (ignore) return;
         setPost(data);
         setTitle(data.title);
         setSlug(data.slug);
@@ -103,6 +105,7 @@ function EditPostContent() {
         setTags(data.tags || []);
         setIsPublished(data.is_published);
       } catch (err) {
+        if (ignore) return;
         console.error("Failed to load post:", err);
         toast.error(err instanceof Error ? err.message : "Article not found");
       } finally {
@@ -110,6 +113,9 @@ function EditPostContent() {
       }
     }
     loadPost();
+    return () => {
+      ignore = true;
+    };
   }, [slugParam]);
 
   const handleAddTag = () => {
@@ -454,8 +460,10 @@ function EditPostContent() {
                               type="button"
                               onClick={() => handleRemoveTag(tag)}
                               className="hover:text-destructive cursor-pointer"
+                              aria-label={`Remove tag ${tag}`}
                             >
                               <X className="size-2.5" />
+                              <span className="sr-only">Remove tag {tag}</span>
                             </button>
                           </Badge>
                         ))}
