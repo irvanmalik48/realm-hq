@@ -15,19 +15,24 @@ import {
 import {
   AlertTriangle,
   Check,
+  CheckCircle2,
   Copy,
   Download,
   Eye,
   KeyRound,
   Link as LinkIcon,
   MoreHorizontal,
+  Pencil,
   RefreshCw,
   Search,
   ShieldAlert,
   ShieldCheck,
+  SlidersHorizontal,
   Trash2,
+  UserCheck,
   UserPlus,
   Users,
+  UserX,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -71,6 +76,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -78,6 +84,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -86,7 +93,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { deleteUser, fetchUsers, type UserDTO } from "@/lib/api/users";
+import {
+  deleteUser,
+  fetchUsers,
+  type UserDTO,
+  updateUser,
+} from "@/lib/api/users";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function UsersPage() {
@@ -99,6 +111,7 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [providerFilter, setProviderFilter] = React.useState<string>("all");
   const [twoFactorFilter, setTwoFactorFilter] = React.useState<string>("all");
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "created_at", desc: true },
   ]);
@@ -110,6 +123,19 @@ export default function UsersPage() {
 
   // Selected User for Detailed Inspection
   const [selectedUser, setSelectedUser] = React.useState<UserDTO | null>(null);
+
+  // User Edit State
+  const [editingUser, setEditingUser] = React.useState<UserDTO | null>(null);
+  const [editFullName, setEditFullName] = React.useState("");
+  const [editUsername, setEditUsername] = React.useState("");
+  const [editEmail, setEditEmail] = React.useState("");
+  const [editIsActive, setEditIsActive] = React.useState(true);
+  const [isUpdating, setIsUpdating] = React.useState(false);
+
+  // Quick Deactivate / Reactivate Confirmation State
+  const [userToToggleStatus, setUserToToggleStatus] =
+    React.useState<UserDTO | null>(null);
+  const [isTogglingStatus, setIsTogglingStatus] = React.useState(false);
 
   // User Deletion State
   const [userToDelete, setUserToDelete] = React.useState<UserDTO | null>(null);
@@ -143,8 +169,73 @@ export default function UsersPage() {
     void searchQuery;
     void providerFilter;
     void twoFactorFilter;
+    void statusFilter;
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  }, [searchQuery, providerFilter, twoFactorFilter]);
+  }, [searchQuery, providerFilter, twoFactorFilter, statusFilter]);
+
+  const openEditModal = React.useCallback((u: UserDTO) => {
+    setEditingUser(u);
+    setEditFullName(u.full_name || "");
+    setEditUsername(u.username || "");
+    setEditEmail(u.email || "");
+    setEditIsActive(u.is_active !== false);
+  }, []);
+
+  const handleSaveEdit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!editingUser) return;
+    if (!editUsername.trim()) {
+      toast.error("Username cannot be empty");
+      return;
+    }
+    if (!editEmail.trim()) {
+      toast.error("Email address cannot be empty");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await updateUser(editingUser.id, {
+        full_name: editFullName.trim(),
+        username: editUsername.trim(),
+        email: editEmail.trim(),
+        is_active: editIsActive,
+      });
+      toast.success(`User @${editUsername.trim()} updated successfully`);
+      setEditingUser(null);
+      loadUsers();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update user account",
+      );
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleConfirmToggleStatus = async () => {
+    if (!userToToggleStatus) return;
+    const newActive = userToToggleStatus.is_active === false;
+    setIsTogglingStatus(true);
+    try {
+      await updateUser(userToToggleStatus.id, {
+        is_active: newActive,
+      });
+      toast.success(
+        newActive
+          ? `User @${userToToggleStatus.username} reactivated successfully`
+          : `User @${userToToggleStatus.username} deactivated successfully`,
+      );
+      setUserToToggleStatus(null);
+      loadUsers();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to change account status",
+      );
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  };
 
   // Filtered dataset
   const filteredUsers = React.useMemo(() => {
@@ -157,6 +248,10 @@ export default function UsersPage() {
         const matchesEmail = u.email?.toLowerCase().includes(q);
         if (!matchesName && !matchesUser && !matchesEmail) return false;
       }
+
+      // Status filter
+      if (statusFilter === "active" && u.is_active === false) return false;
+      if (statusFilter === "deactivated" && u.is_active !== false) return false;
 
       // Provider filter
       if (providerFilter !== "all") {
@@ -191,13 +286,15 @@ export default function UsersPage() {
 
       return true;
     });
-  }, [users, searchQuery, providerFilter, twoFactorFilter]);
+  }, [users, searchQuery, providerFilter, twoFactorFilter, statusFilter]);
 
   // Summary Metrics
   const metrics = React.useMemo(() => {
     const total = users.length;
     const with2FA = users.filter((u) => u.two_factor_enabled).length;
     const rate2FA = total > 0 ? Math.round((with2FA / total) * 100) : 0;
+    const activeUsers = users.filter((u) => u.is_active !== false).length;
+    const deactivatedUsers = total - activeUsers;
     const googleUsers = users.filter(
       (u) =>
         u.provider?.toLowerCase() === "google" ||
@@ -228,6 +325,8 @@ export default function UsersPage() {
       total,
       with2FA,
       rate2FA,
+      activeUsers,
+      deactivatedUsers,
       oauthUsers,
       localUsers,
       googleUsers,
@@ -495,6 +594,30 @@ export default function UsersPage() {
         },
       },
       {
+        accessorKey: "is_active",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Status" />
+        ),
+        cell: ({ row }) => {
+          const isActive = row.original.is_active !== false;
+          return isActive ? (
+            <Badge
+              variant="outline"
+              className="border-emerald-500/40 text-emerald-500 bg-emerald-500/10 text-[10px] gap-1 px-1.5 py-0"
+            >
+              <CheckCircle2 className="h-3 w-3" /> Active
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="border-destructive/40 text-destructive bg-destructive/10 text-[10px] gap-1 px-1.5 py-0"
+            >
+              <UserX className="h-3 w-3" /> Deactivated
+            </Badge>
+          );
+        },
+      },
+      {
         accessorKey: "created_at",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Registered" />
@@ -540,7 +663,7 @@ export default function UsersPage() {
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-52">
                   <DropdownMenuItem
                     onClick={() => setSelectedUser(u)}
                     className="text-xs cursor-pointer gap-2"
@@ -574,6 +697,34 @@ export default function UsersPage() {
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
+                        onClick={() => openEditModal(u)}
+                        className="text-xs cursor-pointer gap-2"
+                      >
+                        <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        Edit Account
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setUserToToggleStatus(u)}
+                        className={`text-xs cursor-pointer gap-2 ${
+                          u.is_active !== false
+                            ? "text-amber-500 focus:text-amber-500"
+                            : "text-emerald-500 focus:text-emerald-500"
+                        }`}
+                      >
+                        {u.is_active !== false ? (
+                          <>
+                            <UserX className="h-3.5 w-3.5" />
+                            Deactivate Account
+                          </>
+                        ) : (
+                          <>
+                            <UserCheck className="h-3.5 w-3.5" />
+                            Reactivate Account
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
                         onClick={() => setUserToDelete(u)}
                         className="text-xs cursor-pointer gap-2 text-destructive focus:text-destructive"
                       >
@@ -589,7 +740,7 @@ export default function UsersPage() {
         },
       },
     ],
-    [canManageUsers, router],
+    [canManageUsers, router, openEditModal],
   );
 
   const table = useReactTable({
@@ -721,16 +872,18 @@ export default function UsersPage() {
           <Card className="p-3.5">
             <CardHeader className="p-0 pb-1 flex flex-row items-center justify-between">
               <span className="text-xs font-medium text-muted-foreground">
-                Local Password
+                Active Accounts
               </span>
-              <KeyRound className="h-4 w-4 text-amber-500" />
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
             </CardHeader>
             <CardContent className="p-0">
               <div className="text-2xl font-bold font-mono tracking-tight">
-                {metrics.localUsers}
+                {metrics.activeUsers}
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                Direct credentials active
+                {metrics.deactivatedUsers > 0
+                  ? `${metrics.deactivatedUsers} deactivated`
+                  : "All accounts active"}
               </p>
             </CardContent>
           </Card>
@@ -840,6 +993,70 @@ export default function UsersPage() {
                 </Select>
 
                 <Select
+                  value={statusFilter}
+                  onValueChange={(val) => {
+                    if (val) setStatusFilter(val);
+                  }}
+                >
+                  <SelectTrigger
+                    aria-label="Filter by account status"
+                    className="h-9 w-full sm:w-36 text-xs bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <SlidersHorizontal className="size-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground font-normal">
+                        Status:
+                      </span>
+                      <SelectValue>
+                        {(val) => {
+                          if (val === "active") {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-500">
+                                <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                Active
+                              </span>
+                            );
+                          }
+                          if (val === "deactivated") {
+                            return (
+                              <span className="inline-flex items-center gap-1.5 font-medium text-destructive">
+                                <span className="size-1.5 rounded-full bg-destructive shrink-0" />
+                                Inactive
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="font-medium text-foreground">
+                              All
+                            </span>
+                          );
+                        }}
+                      </SelectValue>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent align="start" className="min-w-[160px]">
+                    <SelectItem value="all" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-muted-foreground/30" />
+                        All Status ({users.length})
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="active" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        Active ({metrics.activeUsers})
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="deactivated" className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-destructive" />
+                        Deactivated ({metrics.deactivatedUsers})
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
                   value={twoFactorFilter}
                   onValueChange={(val) => {
                     if (val) setTwoFactorFilter(val);
@@ -905,7 +1122,8 @@ export default function UsersPage() {
 
                 {(searchQuery ||
                   providerFilter !== "all" ||
-                  twoFactorFilter !== "all") && (
+                  twoFactorFilter !== "all" ||
+                  statusFilter !== "all") && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -913,6 +1131,7 @@ export default function UsersPage() {
                       setSearchQuery("");
                       setProviderFilter("all");
                       setTwoFactorFilter("all");
+                      setStatusFilter("all");
                     }}
                     className="h-9 text-xs px-2.5 cursor-pointer text-muted-foreground hover:text-foreground"
                   >
@@ -1206,7 +1425,52 @@ export default function UsersPage() {
             </div>
           )}
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="pt-2 flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-center gap-2">
+            <div className="flex items-center gap-2">
+              {canManageUsers && selectedUser && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const u = selectedUser;
+                      setSelectedUser(null);
+                      openEditModal(u);
+                    }}
+                    className="text-xs gap-1.5 cursor-pointer"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    Edit Account
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const u = selectedUser;
+                      setSelectedUser(null);
+                      setUserToToggleStatus(u);
+                    }}
+                    className={`text-xs gap-1.5 cursor-pointer ${
+                      selectedUser.is_active !== false
+                        ? "text-amber-500 hover:text-amber-500 hover:bg-amber-500/10"
+                        : "text-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"
+                    }`}
+                  >
+                    {selectedUser.is_active !== false ? (
+                      <>
+                        <UserX className="h-3.5 w-3.5" />
+                        Deactivate
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className="h-3.5 w-3.5" />
+                        Reactivate
+                      </>
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -1217,6 +1481,188 @@ export default function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit User Account Modal */}
+      <Dialog
+        open={!!editingUser}
+        onOpenChange={(open) => !open && setEditingUser(null)}
+      >
+        <DialogContent className="max-w-md">
+          <form onSubmit={handleSaveEdit}>
+            <DialogHeader>
+              <DialogTitle className="text-lg flex items-center gap-2">
+                <Pencil className="h-4 w-4 text-primary" />
+                Edit User Account
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Update account details and manage login privileges for @
+                {editingUser?.username}.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3.5 py-3 text-xs">
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-fullname" className="text-xs">
+                  Full Name
+                </Label>
+                <Input
+                  id="edit-fullname"
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  placeholder="e.g. John Doe"
+                  className="h-9 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-username" className="text-xs">
+                  Username
+                </Label>
+                <Input
+                  id="edit-username"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  placeholder="username"
+                  className="h-9 text-xs font-mono"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-email" className="text-xs">
+                  Email Address
+                </Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="h-9 text-xs font-mono"
+                  required
+                />
+              </div>
+
+              {/* Status Toggle Card */}
+              <div className="p-3 rounded-lg border border-border bg-muted/20 flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-xs text-foreground">
+                      Account Status
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] px-1.5 py-0 ${
+                        editIsActive
+                          ? "border-emerald-500/40 text-emerald-500 bg-emerald-500/10"
+                          : "border-destructive/40 text-destructive bg-destructive/10"
+                      }`}
+                    >
+                      {editIsActive ? "Active" : "Deactivated"}
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {editIsActive
+                      ? "User is authorized to sign in and interact on Realm."
+                      : "User is deactivated and barred from logging in."}
+                  </p>
+                </div>
+                <Switch
+                  checked={editIsActive}
+                  onCheckedChange={setEditIsActive}
+                  aria-label="Toggle user active status"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingUser(null)}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isUpdating}
+                className="gap-1.5 cursor-pointer"
+              >
+                {isUpdating ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deactivate / Reactivate User Confirmation Dialog */}
+      <AlertDialog
+        open={!!userToToggleStatus}
+        onOpenChange={(open) => !open && setUserToToggleStatus(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {userToToggleStatus?.is_active !== false ? (
+                <>
+                  <UserX className="h-5 w-5 text-amber-500" />
+                  Deactivate User Account?
+                </>
+              ) : (
+                <>
+                  <UserCheck className="h-5 w-5 text-emerald-500" />
+                  Reactivate User Account?
+                </>
+              )}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
+              {userToToggleStatus?.is_active !== false ? (
+                <>
+                  Are you sure you want to deactivate{" "}
+                  <span className="font-semibold text-foreground">
+                    @{userToToggleStatus?.username} ({userToToggleStatus?.email}
+                    )
+                  </span>
+                  ? They will immediately be barred from signing in, commenting,
+                  and performing actions on the platform until reactivated.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to reactivate{" "}
+                  <span className="font-semibold text-foreground">
+                    @{userToToggleStatus?.username} ({userToToggleStatus?.email}
+                    )
+                  </span>
+                  ? This will restore their ability to log in and access Realm.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isTogglingStatus}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmToggleStatus}
+              disabled={isTogglingStatus}
+              className={
+                userToToggleStatus?.is_active !== false
+                  ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              }
+            >
+              {isTogglingStatus
+                ? "Processing..."
+                : userToToggleStatus?.is_active !== false
+                  ? "Deactivate Account"
+                  : "Reactivate Account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete User Confirmation Dialog */}
       <AlertDialog
