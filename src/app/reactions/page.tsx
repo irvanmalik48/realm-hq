@@ -419,10 +419,11 @@ function ReactionsContent() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Heart className="h-5 w-5 text-primary" />
             Post Reactions
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Overview of likes and reactions across published articles.
           </p>
         </div>
