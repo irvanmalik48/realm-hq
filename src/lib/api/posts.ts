@@ -51,17 +51,23 @@ export interface FetchPostsParams {
   is_published?: boolean;
 }
 
-const getApiBaseUrl = (): string => {
-  if (typeof window !== "undefined") {
-    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-  }
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const getPostsEndpoint = (slug?: string): string => {
+  const isClient = typeof window !== "undefined";
+  const base = isClient
+    ? "/api/posts"
+    : `${process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/v1/posts`;
+  return slug ? `${base}/${encodeURIComponent(slug)}` : base;
 };
 
 export async function fetchPosts(
   params: FetchPostsParams = {},
 ): Promise<PostsListResponse> {
-  const url = new URL(`${getApiBaseUrl()}/v1/posts`);
+  const isClient = typeof window !== "undefined";
+  const endpoint = getPostsEndpoint();
+  const url = new URL(
+    endpoint,
+    isClient ? window.location.origin : "http://localhost:3000",
+  );
   if (params.limit !== undefined)
     url.searchParams.set("limit", params.limit.toString());
   if (params.offset !== undefined)
@@ -93,14 +99,11 @@ export async function fetchPosts(
 }
 
 export async function fetchPostBySlug(slug: string): Promise<PostDetail> {
-  const res = await fetch(
-    `${getApiBaseUrl()}/v1/posts/${encodeURIComponent(slug)}`,
-    {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-    },
-  );
+  const res = await fetch(getPostsEndpoint(slug), {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch post "${slug}": ${res.statusText}`);
@@ -112,7 +115,7 @@ export async function fetchPostBySlug(slug: string): Promise<PostDetail> {
 export async function createPost(
   payload: CreatePostPayload,
 ): Promise<PostDetail> {
-  const res = await fetch(`${getApiBaseUrl()}/v1/posts`, {
+  const res = await fetch(getPostsEndpoint(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -135,17 +138,14 @@ export async function updatePost(
   slug: string,
   payload: UpdatePostPayload,
 ): Promise<PostDetail> {
-  const res = await fetch(
-    `${getApiBaseUrl()}/v1/posts/${encodeURIComponent(slug)}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(payload),
+  const res = await fetch(getPostsEndpoint(slug), {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
-  );
+    body: JSON.stringify(payload),
+  });
 
   if (!res.ok) {
     const errText = await res.text();
@@ -158,13 +158,10 @@ export async function updatePost(
 }
 
 export async function deletePost(slug: string): Promise<void> {
-  const res = await fetch(
-    `${getApiBaseUrl()}/v1/posts/${encodeURIComponent(slug)}`,
-    {
-      method: "DELETE",
-      headers: { Accept: "application/json" },
-    },
-  );
+  const res = await fetch(getPostsEndpoint(slug), {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+  });
 
   if (!res.ok) {
     const errText = await res.text();
