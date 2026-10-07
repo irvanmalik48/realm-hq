@@ -38,7 +38,10 @@ import {
   DataTablePagination,
 } from "@/components/data-table";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { TableSkeleton } from "@/components/layout/table-skeleton";
+import {
+  TableRowSkeleton,
+  TableSkeleton,
+} from "@/components/layout/table-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -712,7 +715,12 @@ function LogsContent() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {loading ? (
+                <TableRowSkeleton
+                  columnCount={columns.length}
+                  rowCount={pagination.pageSize || 10}
+                />
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -734,9 +742,7 @@ function LogsContent() {
                     colSpan={columns.length}
                     className="h-28 text-center text-xs text-muted-foreground"
                   >
-                    {loading
-                      ? "Loading logs..."
-                      : "No log entries found for this filter."}
+                    No log entries found for this filter.
                   </TableCell>
                 </TableRow>
               )}
@@ -951,6 +957,7 @@ export default function LogsPage() {
       <React.Suspense
         fallback={
           <TableSkeleton
+            icon={Terminal}
             title="System Logs"
             description="Real-time activity logs, diagnostic events, and system errors."
             rowCount={10}
