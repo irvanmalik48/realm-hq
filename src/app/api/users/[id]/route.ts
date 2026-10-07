@@ -61,3 +61,50 @@ export async function DELETE(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    if (!id) {
+      return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const url = `${getApiBaseUrl()}/v1/users/${encodeURIComponent(id)}`;
+    const token = getAuthToken(req);
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return NextResponse.json(
+        {
+          error:
+            errorData?.error || errorData?.message || "Failed to update user",
+        },
+        { status: res.status },
+      );
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
