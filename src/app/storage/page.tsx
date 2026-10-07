@@ -1516,51 +1516,53 @@ function StorageContent() {
         </div>
 
         {/* File Manager Content Area */}
-        <div className="p-4">
-          {loading ? (
+        {loading ? (
+          <div className="p-4">
             <TableSkeleton rowCount={6} />
-          ) : filteredAndSortedFiles.length === 0 ? (
-            /* Empty State */
-            <div className="py-16 px-4 text-center flex flex-col items-center justify-center">
-              <div className="h-16 w-16 rounded-2xl bg-muted/40 border border-border/80 flex items-center justify-center text-muted-foreground mb-3 shadow-inner">
-                <Folder className="h-8 w-8 text-muted-foreground/60" />
-              </div>
-              <h3 className="text-sm font-semibold text-foreground">
-                {files.length === 0
-                  ? "No objects stored yet"
-                  : "No objects match your filters"}
-              </h3>
-              <p className="text-xs text-muted-foreground max-w-sm mt-1 mb-4">
-                {files.length === 0
-                  ? "Drag & drop files anywhere in this window or click below to upload with transparent Zstandard compression."
-                  : "Try clearing search queries, backend filters, or category tabs to find what you're looking for."}
-              </p>
-              {files.length === 0 ? (
-                <Button
-                  size="sm"
-                  onClick={() => setUploadOpen(true)}
-                  className="gap-1.5 text-xs cursor-pointer shadow-xs"
-                >
-                  <UploadCloud className="h-4 w-4" />
-                  Upload First Object
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setCategoryFilter("all");
-                    setBackendFilter("all");
-                    setGlobalFilter("");
-                  }}
-                  className="text-xs cursor-pointer"
-                >
-                  Clear Filters
-                </Button>
-              )}
+          </div>
+        ) : filteredAndSortedFiles.length === 0 ? (
+          /* Empty State */
+          <div className="py-16 px-4 text-center flex flex-col items-center justify-center">
+            <div className="h-16 w-16 rounded-2xl bg-muted/40 border border-border/80 flex items-center justify-center text-muted-foreground mb-3 shadow-inner">
+              <Folder className="h-8 w-8 text-muted-foreground/60" />
             </div>
-          ) : viewMode === "grid" ? (
-            /* GRID VIEW */
+            <h3 className="text-sm font-semibold text-foreground">
+              {files.length === 0
+                ? "No objects stored yet"
+                : "No objects match your filters"}
+            </h3>
+            <p className="text-xs text-muted-foreground max-w-sm mt-1 mb-4">
+              {files.length === 0
+                ? "Drag & drop files anywhere in this window or click below to upload with transparent Zstandard compression."
+                : "Try clearing search queries, backend filters, or category tabs to find what you're looking for."}
+            </p>
+            {files.length === 0 ? (
+              <Button
+                size="sm"
+                onClick={() => setUploadOpen(true)}
+                className="gap-1.5 text-xs cursor-pointer shadow-xs"
+              >
+                <UploadCloud className="h-4 w-4" />
+                Upload First Object
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setCategoryFilter("all");
+                  setBackendFilter("all");
+                  setGlobalFilter("");
+                }}
+                className="text-xs cursor-pointer"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        ) : viewMode === "grid" ? (
+          /* GRID VIEW */
+          <div className="p-4 sm:p-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
               {table.getRowModel().rows.map((row) => {
                 const file = row.original;
@@ -1715,56 +1717,54 @@ function StorageContent() {
                 );
               })}
             </div>
-          ) : (
-            /* LIST VIEW */
-            <div className="rounded-lg border border-border/80 overflow-hidden">
-              <Table className="min-w-[700px]">
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id} className="bg-muted/20">
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id} className="text-xs">
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      className="hover:bg-muted/40 transition-colors"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="py-2.5">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-
-          {/* Configurable Pagination Controls */}
-          <div className="rounded-lg border border-border/80 overflow-hidden">
-            <DataTablePagination
-              table={table}
-              totalCount={filteredAndSortedFiles.length}
-              pageSizeOptions={[10, 15, 25, 50, 100]}
-            />
           </div>
-        </div>
+        ) : (
+          /* LIST VIEW */
+          <div className="overflow-x-auto">
+            <Table className="min-w-[700px]">
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="bg-muted/20">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} className="text-xs">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className="hover:bg-muted/40 transition-colors"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="py-2.5">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {/* Configurable Pagination Controls */}
+        <DataTablePagination
+          table={table}
+          totalCount={filteredAndSortedFiles.length}
+          pageSizeOptions={[10, 15, 25, 50, 100]}
+        />
       </Card>
 
       {/* File Inspector Side Sheet */}
