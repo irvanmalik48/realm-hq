@@ -7,6 +7,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   type RowSelectionState,
   type SortingState,
   useReactTable,
@@ -105,6 +106,17 @@ function LogsContent() {
     { id: "timestamp", desc: true },
   ]);
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 20,
+  });
+
+  React.useEffect(() => {
+    void levelFilter;
+    void search;
+    void traceFilter;
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [levelFilter, search, traceFilter]);
 
   // Inspect modal
   const [inspectTarget, setInspectTarget] = React.useState<LogEntry | null>(
@@ -450,19 +462,16 @@ function LogsContent() {
     state: {
       sorting,
       rowSelection,
+      pagination,
     },
     enableRowSelection: true,
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 20,
-      },
-    },
   });
 
   const selectedCount = Object.keys(rowSelection).length;
@@ -735,6 +744,7 @@ function LogsContent() {
           {/* Configurable Pagination Controls */}
           <DataTablePagination
             table={table}
+            totalCount={logs.length}
             pageSizeOptions={[10, 20, 50, 100]}
           />
         </CardContent>
