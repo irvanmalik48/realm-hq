@@ -37,7 +37,10 @@ import {
   DataTablePagination,
 } from "@/components/data-table";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { TableSkeleton } from "@/components/layout/table-skeleton";
+import {
+  TableRowSkeleton,
+  TableSkeleton,
+} from "@/components/layout/table-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -535,7 +538,12 @@ function ReactionsContent() {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {loading ? (
+                <TableRowSkeleton
+                  columnCount={columns.length}
+                  rowCount={pagination.pageSize || 8}
+                />
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -557,9 +565,7 @@ function ReactionsContent() {
                     colSpan={columns.length}
                     className="h-28 text-center text-xs text-muted-foreground"
                   >
-                    {loading
-                      ? "Loading reactions..."
-                      : "No post reactions found matching your filter."}
+                    No post reactions found matching your filter.
                   </TableCell>
                 </TableRow>
               )}
@@ -679,8 +685,9 @@ export default function ReactionsPage() {
       <React.Suspense
         fallback={
           <TableSkeleton
+            icon={Heart}
             title="Post Reactions"
-            description="Aggregate sentiment, likes, and engagement per article."
+            description="Overview of likes and reactions across published articles."
             rowCount={8}
             columnCount={4}
           />
