@@ -35,6 +35,16 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
     });
 
+    if (!forwardRes.ok) {
+      const errorData = await forwardRes.json().catch(() => ({
+        error: "Failed to record analytics event",
+      }));
+      return NextResponse.json(errorData, {
+        status: forwardRes.status,
+        headers: corsHeaders,
+      });
+    }
+
     const data = await forwardRes.json();
     return NextResponse.json(data, {
       status: forwardRes.status,
