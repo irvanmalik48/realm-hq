@@ -640,10 +640,11 @@ function AdminsContent() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
             Administrators
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Manage administrator accounts, assign roles, and control access
             permissions.
           </p>
