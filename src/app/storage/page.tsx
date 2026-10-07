@@ -931,10 +931,11 @@ function StorageContent() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <HardDrive className="h-5 w-5 text-primary" />
             File Storage
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Upload, organize, preview, and manage your stored files and media.
           </p>
         </div>
