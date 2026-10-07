@@ -801,8 +801,10 @@ function CommentsContent() {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 cursor-pointer"
+                    aria-label="More comment options"
                   >
                     <MoreHorizontal className="h-3.5 w-3.5" />
+                    <span className="sr-only">More comment options</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-36">
@@ -875,6 +877,11 @@ function CommentsContent() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   });
 
   const selectedCount = Object.keys(rowSelection).length;
@@ -883,18 +890,19 @@ function CommentsContent() {
     setIsBulkOperating(true);
     const selectedRows = table.getSelectedRowModel().rows;
     const ids = selectedRows.map((r) => r.original.id);
-    let successCount = 0;
+    const idSet = new Set(ids);
 
-    for (const id of ids) {
-      try {
+    const results = await Promise.allSettled(
+      ids.map(async (id) => {
         const res = await fetch(`/api/comments?id=${id}`, { method: "DELETE" });
-        if (res.ok) successCount++;
-      } catch {
-        // continue with remaining
-      }
-    }
+        return res.ok;
+      }),
+    );
+    const successCount = results.filter(
+      (r) => r.status === "fulfilled" && r.value,
+    ).length;
 
-    setData((prev) => prev.filter((c) => !ids.includes(c.id)));
+    setData((prev) => prev.filter((c) => !idSet.has(c.id)));
     setRowSelection({});
     setBulkDeleteOpen(false);
     setIsBulkOperating(false);
@@ -1589,7 +1597,10 @@ function CommentsContent() {
             </Table>
           </CardContent>
 
-          <DataTablePagination table={table} />
+          <DataTablePagination
+            table={table}
+            pageSizeOptions={[10, 20, 50, 100]}
+          />
         </Card>
       )}
 
@@ -1935,8 +1946,10 @@ function ThreadNodeCard({
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 cursor-pointer"
+                    aria-label="Comment actions"
                   >
                     <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="sr-only">Comment actions</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-32">
