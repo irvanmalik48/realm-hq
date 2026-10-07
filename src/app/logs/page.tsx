@@ -26,6 +26,7 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  Terminal,
   Trash2,
   X,
 } from "lucide-react";
@@ -480,10 +481,11 @@ function LogsContent() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Terminal className="h-5 w-5 text-primary" />
             System Logs
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Real-time activity logs, diagnostic events, and system errors.
           </p>
         </div>
