@@ -8,6 +8,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   type RowSelectionState,
   type SortingState,
   useReactTable,
@@ -104,6 +105,17 @@ export default function PostsPage() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [tagFilter, setTagFilter] = React.useState<string>("all");
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  React.useEffect(() => {
+    void searchQuery;
+    void statusFilter;
+    void tagFilter;
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+  }, [searchQuery, statusFilter, tagFilter]);
 
   // Deletion dialog states
   const [postToDelete, setPostToDelete] = React.useState<PostSummary | null>(
@@ -492,20 +504,17 @@ export default function PostsPage() {
       sorting,
       columnFilters,
       rowSelection,
+      pagination,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
   });
 
   const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
@@ -810,6 +819,7 @@ export default function PostsPage() {
 
               <DataTablePagination
                 table={table}
+                totalCount={filteredData.length}
                 pageSizeOptions={[10, 20, 50, 100]}
               />
             </>
