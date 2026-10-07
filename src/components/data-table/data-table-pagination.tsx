@@ -7,6 +7,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -35,6 +36,14 @@ export function DataTablePagination<TData>({
 
   const startRow = totalRows === 0 ? 0 : pageIndex * pageSize + 1;
   const endRow = Math.min((pageIndex + 1) * pageSize, totalRows);
+
+  const options = React.useMemo(() => {
+    const set = new Set(pageSizeOptions);
+    if (pageSize) {
+      set.add(pageSize);
+    }
+    return Array.from(set).sort((a, b) => a - b);
+  }, [pageSizeOptions, pageSize]);
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 px-3 sm:px-4 py-3 border-t border-border bg-card/40">
@@ -69,10 +78,10 @@ export function DataTablePagination<TData>({
             }}
           >
             <SelectTrigger className="h-8 w-[72px] text-xs">
-              <SelectValue placeholder={String(pageSize)} />
+              <SelectValue>{(val) => val || String(pageSize)}</SelectValue>
             </SelectTrigger>
-            <SelectContent side="top">
-              {pageSizeOptions.map((size) => (
+            <SelectContent side="top" alignItemWithTrigger={false}>
+              {options.map((size) => (
                 <SelectItem key={size} value={String(size)} className="text-xs">
                   {size}
                 </SelectItem>
