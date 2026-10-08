@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const token = request.cookies.get("realm_auth_token")?.value;
   const isLoginPage = request.nextUrl.pathname === "/login";
 
@@ -19,6 +19,8 @@ export function proxy(request: NextRequest) {
 
   return NextResponse.next();
 }
+
+export const proxy = middleware;
 
 export const config = {
   matcher: [
