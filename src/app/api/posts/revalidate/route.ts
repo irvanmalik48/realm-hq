@@ -1,8 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
+import { requireAuth } from "@/lib/auth/server-auth";
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { slug } = await req.json().catch(() => ({}));
     const blogUrl =
       env.NEXT_PUBLIC_BLOG_URL ||
