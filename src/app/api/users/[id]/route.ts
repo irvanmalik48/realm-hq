@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
+import { requireAuth } from "@/lib/auth/server-auth";
 
 function getApiBaseUrl(): string {
   return (
@@ -10,32 +11,24 @@ function getApiBaseUrl(): string {
   );
 }
 
-function getAuthToken(req: NextRequest): string | undefined {
-  return (
-    req.cookies.get("realm_auth_token")?.value ||
-    env.API_TOKEN ||
-    process.env.API_TOKEN
-  );
-}
-
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
     }
 
     const url = `${getApiBaseUrl()}/v1/users/${encodeURIComponent(id)}`;
-    const token = getAuthToken(req);
     const headers: Record<string, string> = {
       Accept: "application/json",
+      Authorization: `Bearer ${auth.token}`,
     };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
 
     const res = await fetch(url, {
       method: "DELETE",
@@ -67,6 +60,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
@@ -74,14 +70,11 @@ export async function PATCH(
 
     const body = await req.json().catch(() => ({}));
     const url = `${getApiBaseUrl()}/v1/users/${encodeURIComponent(id)}`;
-    const token = getAuthToken(req);
     const headers: Record<string, string> = {
       Accept: "application/json",
       "Content-Type": "application/json",
+      Authorization: `Bearer ${auth.token}`,
     };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
 
     const res = await fetch(url, {
       method: "PATCH",
