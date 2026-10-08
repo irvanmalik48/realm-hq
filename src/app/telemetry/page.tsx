@@ -33,6 +33,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 
 interface CPUStats {
@@ -102,7 +103,7 @@ function formatUptime(seconds?: number): string {
 }
 
 function formatFreqGHz(mhz?: number): string {
-  if (!mhz || mhz <= 0) return "0.00 GHz";
+  if (!mhz || mhz <= 0) return "N/A";
   if (mhz >= 1000) {
     return `${(mhz / 1000).toFixed(2)} GHz`;
   }
@@ -112,7 +113,7 @@ function formatFreqGHz(mhz?: number): string {
 export default function TelemetryPage() {
   const [data, setData] = React.useState<TelemetryResponse | null>(null);
   const [history, setHistory] = React.useState<MetricPoint[]>([]);
-  const [_loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(true);
   const [liveStream, setLiveStream] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [streamConnected, setStreamConnected] = React.useState(false);
@@ -221,6 +222,15 @@ export default function TelemetryPage() {
   const coreUsages = data?.cpu?.core_usage_percent || [];
   const coreFreqs = data?.cpu?.core_frequency_mhz || [];
 
+  const hasCpuMetrics = Boolean(
+    data?.cpu &&
+      ((data.cpu.avg_frequency_mhz ?? 0) > 0 ||
+        (data.cpu.usage_percent ?? 0) > 0 ||
+        (data.cpu.load_1m ?? 0) > 0 ||
+        (data.cpu.core_count ?? 0) > 0 ||
+        (data.cpu.model_name && data.cpu.model_name.length > 0)),
+  );
+
   const getLoadColor = (pct: number) => {
     if (pct >= 80) return "text-rose-500";
     if (pct >= 50) return "text-amber-500";
@@ -315,34 +325,63 @@ export default function TelemetryPage() {
               <span className="text-xs font-medium text-muted-foreground">
                 CPU Load
               </span>
-              <Gauge className={`h-4 w-4 ${getLoadColor(currentCpuLoad)}`} />
+              <Gauge
+                className={`h-4 w-4 ${hasCpuMetrics ? getLoadColor(currentCpuLoad) : "text-muted-foreground"}`}
+              />
             </div>
             <div className="mt-2.5">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold font-mono tracking-tight text-foreground">
-                  {currentCpuLoad.toFixed(1)}%
-                </span>
-                <Badge
-                  variant="outline"
-                  className={getLoadBadgeVariant(currentCpuLoad)}
-                >
-                  {currentCpuLoad < 50
-                    ? "Normal"
-                    : currentCpuLoad < 80
-                      ? "Elevated"
-                      : "Heavy"}
-                </Badge>
-              </div>
-              <div className="w-full bg-secondary/80 h-1.5 rounded-full mt-2.5 overflow-hidden">
-                <div
-                  className="bg-emerald-500 h-full transition-[width] duration-500 rounded-full"
-                  style={{ width: `${Math.min(100, currentCpuLoad)}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-muted-foreground mt-1.5 block truncate">
-                Load: {data?.cpu?.load_1m?.toFixed(2) ?? "0.00"} /{" "}
-                {data?.cpu?.load_5m?.toFixed(2) ?? "0.00"}
-              </span>
+              {loading && !data ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-1.5 w-full" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              ) : hasCpuMetrics ? (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold font-mono tracking-tight text-foreground">
+                      {currentCpuLoad.toFixed(1)}%
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={getLoadBadgeVariant(currentCpuLoad)}
+                    >
+                      {currentCpuLoad < 50
+                        ? "Normal"
+                        : currentCpuLoad < 80
+                          ? "Elevated"
+                          : "Heavy"}
+                    </Badge>
+                  </div>
+                  <div className="w-full bg-secondary/80 h-1.5 rounded-full mt-2.5 overflow-hidden">
+                    <div
+                      className="bg-emerald-500 h-full transition-[width] duration-500 rounded-full"
+                      style={{ width: `${Math.min(100, currentCpuLoad)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-1.5 block truncate">
+                    Load: {data?.cpu?.load_1m?.toFixed(2) ?? "0.00"} /{" "}
+                    {data?.cpu?.load_5m?.toFixed(2) ?? "0.00"}
+                  </span>
+                </>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold font-mono tracking-tight text-muted-foreground">
+                      N/A
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-muted-foreground border-border text-[10px]"
+                    >
+                      Awaiting API
+                    </Badge>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block truncate">
+                    Restart API service to track
+                  </span>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -352,29 +391,59 @@ export default function TelemetryPage() {
               <span className="text-xs font-medium text-muted-foreground">
                 CPU Clock Speed
               </span>
-              <Flame className="h-4 w-4 text-cyan-500" />
+              <Flame
+                className={`h-4 w-4 ${hasCpuMetrics && currentCpuFreqMHz > 0 ? "text-cyan-500" : "text-muted-foreground"}`}
+              />
             </div>
             <div className="mt-2.5">
-              <div className="text-2xl font-bold font-mono tracking-tight text-foreground">
-                {formatFreqGHz(currentCpuFreqMHz)}
-              </div>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <Badge
-                  variant="outline"
-                  className="font-mono text-[9px] px-1 py-0"
-                >
-                  Min {formatFreqGHz(data?.cpu?.min_frequency_mhz)}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="font-mono text-[9px] px-1 py-0"
-                >
-                  Max {formatFreqGHz(data?.cpu?.max_frequency_mhz)}
-                </Badge>
-              </div>
-              <span className="text-[10px] text-muted-foreground mt-1.5 block truncate">
-                {data?.cpu?.model_name || "Hardware Governor Active"}
-              </span>
+              {loading && !data ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-7 w-24" />
+                  <div className="flex gap-1.5">
+                    <Skeleton className="h-3.5 w-14" />
+                    <Skeleton className="h-3.5 w-14" />
+                  </div>
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              ) : hasCpuMetrics && currentCpuFreqMHz > 0 ? (
+                <>
+                  <div className="text-2xl font-bold font-mono tracking-tight text-foreground">
+                    {formatFreqGHz(currentCpuFreqMHz)}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    {data?.cpu?.min_frequency_mhz &&
+                    data.cpu.min_frequency_mhz > 0 ? (
+                      <Badge
+                        variant="outline"
+                        className="font-mono text-[9px] px-1 py-0"
+                      >
+                        Min {formatFreqGHz(data.cpu.min_frequency_mhz)}
+                      </Badge>
+                    ) : null}
+                    {data?.cpu?.max_frequency_mhz &&
+                    data.cpu.max_frequency_mhz > 0 ? (
+                      <Badge
+                        variant="outline"
+                        className="font-mono text-[9px] px-1 py-0"
+                      >
+                        Max {formatFreqGHz(data.cpu.max_frequency_mhz)}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-1.5 block truncate">
+                    {data?.cpu?.model_name || "Hardware Governor Active"}
+                  </span>
+                </>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="text-2xl font-bold font-mono tracking-tight text-muted-foreground">
+                    N/A
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block truncate">
+                    Restart API service to track
+                  </span>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -387,12 +456,21 @@ export default function TelemetryPage() {
               <Cpu className="h-4 w-4 text-blue-500" />
             </div>
             <div className="mt-2.5">
-              <div className="text-2xl font-bold font-mono text-foreground">
-                {data?.runtime?.goroutines ?? 0}
-              </div>
-              <span className="text-[11px] text-muted-foreground mt-1 block">
-                Concurrent Go routines
-              </span>
+              {loading && !data ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold font-mono text-foreground">
+                    {data?.runtime?.goroutines ?? 0}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground mt-1 block">
+                    Concurrent Go routines
+                  </span>
+                </>
+              )}
             </div>
           </Card>
 
@@ -405,12 +483,21 @@ export default function TelemetryPage() {
               <Zap className="h-4 w-4 text-amber-500" />
             </div>
             <div className="mt-2.5">
-              <div className="text-2xl font-bold font-mono text-foreground">
-                {formatBytes(data?.runtime?.alloc_bytes)}
-              </div>
-              <span className="text-[11px] text-muted-foreground mt-1 block">
-                Reserved: {formatBytes(data?.runtime?.sys_bytes)}
-              </span>
+              {loading && !data ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold font-mono text-foreground">
+                    {formatBytes(data?.runtime?.alloc_bytes)}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground mt-1 block">
+                    Reserved: {formatBytes(data?.runtime?.sys_bytes)}
+                  </span>
+                </>
+              )}
             </div>
           </Card>
 
@@ -423,12 +510,21 @@ export default function TelemetryPage() {
               <RefreshCw className="h-4 w-4 text-emerald-500" />
             </div>
             <div className="mt-2.5">
-              <div className="text-2xl font-bold font-mono text-foreground">
-                {data?.runtime?.gc_cycles ?? 0}
-              </div>
-              <span className="text-[11px] text-muted-foreground mt-1 block">
-                Garbage collections
-              </span>
+              {loading && !data ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-7 w-16" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold font-mono text-foreground">
+                    {data?.runtime?.gc_cycles ?? 0}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground mt-1 block">
+                    Garbage collections
+                  </span>
+                </>
+              )}
             </div>
           </Card>
 
@@ -441,13 +537,22 @@ export default function TelemetryPage() {
               <Database className="h-4 w-4 text-violet-500" />
             </div>
             <div className="mt-2.5">
-              <div className="text-2xl font-bold font-mono text-foreground">
-                {data?.db_pool?.acquired_conns ?? 0} /{" "}
-                {data?.db_pool?.max_conns ?? 10}
-              </div>
-              <span className="text-[11px] text-muted-foreground mt-1 block">
-                {data?.db_pool?.idle_conns ?? 0} idle connections
-              </span>
+              {loading && !data ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-7 w-20" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold font-mono text-foreground">
+                    {data?.db_pool?.acquired_conns ?? 0} /{" "}
+                    {data?.db_pool?.max_conns ?? 10}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground mt-1 block">
+                    {data?.db_pool?.idle_conns ?? 0} idle connections
+                  </span>
+                </>
+              )}
             </div>
           </Card>
         </div>
@@ -476,69 +581,86 @@ export default function TelemetryPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[240px] w-full pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={history}
-                    margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="cpuLoadGrad"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#10b981"
-                          stopOpacity={0.4}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#10b981"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="time"
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      domain={[0, 100]}
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                      tickFormatter={(val) => `${val}%`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--color-card)",
-                        borderColor: "var(--color-border)",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                      formatter={(val: unknown) => [
-                        `${Number(val).toFixed(1)}%`,
-                        "CPU Load",
-                      ]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="cpuLoad"
-                      stroke="#10b981"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#cpuLoadGrad)"
-                      isAnimationActive={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {loading && history.length === 0 ? (
+                <div className="h-[240px] w-full pt-4">
+                  <Skeleton className="h-full w-full rounded-md" />
+                </div>
+              ) : !hasCpuMetrics && history.length === 0 ? (
+                <div className="h-[240px] w-full flex flex-col items-center justify-center text-center p-4 rounded-lg border border-dashed border-border/70 bg-muted/20">
+                  <Gauge className="h-8 w-8 text-muted-foreground/60 mb-2" />
+                  <p className="text-xs font-medium text-foreground">
+                    CPU Telemetry Pending
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 max-w-xs">
+                    Restart or redeploy the realm-api backend to stream
+                    real-time CPU utilization metrics.
+                  </p>
+                </div>
+              ) : (
+                <div className="h-[240px] w-full pt-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={history}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="cpuLoadGrad"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#10b981"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#10b981"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="time"
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(val) => `${val}%`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--color-card)",
+                          borderColor: "var(--color-border)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        formatter={(val: unknown) => [
+                          `${Number(val).toFixed(1)}%`,
+                          "CPU Load",
+                        ]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="cpuLoad"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#cpuLoadGrad)"
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -564,74 +686,120 @@ export default function TelemetryPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[240px] w-full pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={history}
-                    margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="cpuFreqGrad"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#06b6d4"
-                          stopOpacity={0.4}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#06b6d4"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="time"
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                      tickFormatter={(val) => `${Number(val).toFixed(1)}G`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--color-card)",
-                        borderColor: "var(--color-border)",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                      formatter={(val: unknown) => [
-                        `${Number(val).toFixed(2)} GHz`,
-                        "Clock Frequency",
-                      ]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="cpuFreqGHz"
-                      stroke="#06b6d4"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#cpuFreqGrad)"
-                      isAnimationActive={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {loading && history.length === 0 ? (
+                <div className="h-[240px] w-full pt-4">
+                  <Skeleton className="h-full w-full rounded-md" />
+                </div>
+              ) : !hasCpuMetrics && history.length === 0 ? (
+                <div className="h-[240px] w-full flex flex-col items-center justify-center text-center p-4 rounded-lg border border-dashed border-border/70 bg-muted/20">
+                  <Flame className="h-8 w-8 text-muted-foreground/60 mb-2" />
+                  <p className="text-xs font-medium text-foreground">
+                    Clock Speed Telemetry Pending
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 max-w-xs">
+                    Restart or redeploy the realm-api backend to stream
+                    processor clock frequency metrics.
+                  </p>
+                </div>
+              ) : (
+                <div className="h-[240px] w-full pt-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={history}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="cpuFreqGrad"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#06b6d4"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#06b6d4"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="time"
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(val) => `${Number(val).toFixed(1)}G`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--color-card)",
+                          borderColor: "var(--color-border)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        formatter={(val: unknown) => [
+                          `${Number(val).toFixed(2)} GHz`,
+                          "Clock Frequency",
+                        ]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="cpuFreqGHz"
+                        stroke="#06b6d4"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#cpuFreqGrad)"
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Per-Core Breakdown Grid */}
-        {coreUsages.length > 0 && (
+        {loading && !data ? (
+          <Card className="p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Cpu className="h-4 w-4 text-primary" />
+                  Per-Core Utilization &amp; Frequency Matrix
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Granular load distribution across logical execution threads
+                </p>
+              </div>
+              <Skeleton className="h-5 w-32" />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+              {[0, 1, 2, 3].map((id) => (
+                <div
+                  key={`skeleton-core-${id}`}
+                  className="p-3 rounded-lg border border-border/60 bg-secondary/30 flex flex-col justify-between gap-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-14" />
+                  </div>
+                  <Skeleton className="h-2 w-full" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        ) : coreUsages.length > 0 ? (
           <Card className="p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <div>
@@ -644,12 +812,14 @@ export default function TelemetryPage() {
                   execution threads
                 </p>
               </div>
-              <Badge
-                variant="secondary"
-                className="font-mono text-[11px] self-start sm:self-auto"
-              >
-                {data?.cpu?.model_name}
-              </Badge>
+              {data?.cpu?.model_name ? (
+                <Badge
+                  variant="secondary"
+                  className="font-mono text-[11px] self-start sm:self-auto"
+                >
+                  {data?.cpu?.model_name}
+                </Badge>
+              ) : null}
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -702,7 +872,7 @@ export default function TelemetryPage() {
                 ))}
             </div>
           </Card>
-        )}
+        ) : null}
 
         {/* Memory & DB Connection Pool Charts Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
@@ -724,68 +894,74 @@ export default function TelemetryPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[220px] w-full pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={history}
-                    margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="telemetryAlloc"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="#3b82f6"
-                          stopOpacity={0.4}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#3b82f6"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="time"
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                      tickFormatter={(val) => `${Number(val).toFixed(0)}M`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--color-card)",
-                        borderColor: "var(--color-border)",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                      formatter={(val: unknown) => [
-                        `${Number(val).toFixed(2)} MB`,
-                        "Memory",
-                      ]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="allocMB"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#telemetryAlloc)"
-                      isAnimationActive={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {loading && history.length === 0 ? (
+                <div className="h-[220px] w-full pt-4">
+                  <Skeleton className="h-full w-full rounded-md" />
+                </div>
+              ) : (
+                <div className="h-[220px] w-full pt-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={history}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="telemetryAlloc"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="time"
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(val) => `${Number(val).toFixed(0)}M`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--color-card)",
+                          borderColor: "var(--color-border)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        formatter={(val: unknown) => [
+                          `${Number(val).toFixed(2)} MB`,
+                          "Memory",
+                        ]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="allocMB"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#telemetryAlloc)"
+                        isAnimationActive={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -814,50 +990,56 @@ export default function TelemetryPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[220px] w-full pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={history}
-                    margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
-                  >
-                    <XAxis
-                      dataKey="time"
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                    />
-                    <YAxis
-                      stroke="var(--color-muted-foreground)"
-                      fontSize={11}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--color-card)",
-                        borderColor: "var(--color-border)",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="goroutines"
-                      stroke="#8b5cf6"
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="acquiredConns"
-                      stroke="#10b981"
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {loading && history.length === 0 ? (
+                <div className="h-[220px] w-full pt-4">
+                  <Skeleton className="h-full w-full rounded-md" />
+                </div>
+              ) : (
+                <div className="h-[220px] w-full pt-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={history}
+                      margin={{ top: 5, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <XAxis
+                        dataKey="time"
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        stroke="var(--color-muted-foreground)"
+                        fontSize={11}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--color-card)",
+                          borderColor: "var(--color-border)",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="goroutines"
+                        stroke="#8b5cf6"
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="acquiredConns"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
