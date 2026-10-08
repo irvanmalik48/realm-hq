@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
+import { requireAuth } from "@/lib/auth/server-auth";
 
 export interface PostMeta {
   slug: string;
@@ -18,14 +19,6 @@ function getApiBaseUrl(): string {
     env.NEXT_PUBLIC_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     "http://localhost:8080"
-  );
-}
-
-function getAuthToken(req: NextRequest): string | undefined {
-  return (
-    req.cookies.get("realm_auth_token")?.value ||
-    env.API_TOKEN ||
-    process.env.API_TOKEN
   );
 }
 
@@ -105,13 +98,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const token = getAuthToken(req);
-    if (!token) {
-      return NextResponse.json(
-        { error: "Unauthorized: missing authentication token" },
-        { status: 401 },
-      );
-    }
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
 
     const payload = await req.json();
     const res = await fetch(`${getApiBaseUrl()}/v1/posts`, {
@@ -119,7 +107,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${auth.token}`,
       },
       body: JSON.stringify(payload),
     });
