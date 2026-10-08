@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/server-auth";
 import {
   createMetadata,
   getCommentClient,
@@ -8,7 +9,9 @@ import { formatGrpcError } from "@/lib/grpc/errors";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
@@ -16,7 +19,7 @@ export async function GET(req: NextRequest) {
     const postSlug = searchParams.get("post_slug") || "";
 
     const client = getCommentClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
@@ -39,11 +42,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const body = await req.json();
 
     const client = getCommentClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
@@ -65,11 +70,13 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const body = await req.json();
 
     const client = getCommentClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
@@ -91,7 +98,9 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
@@ -103,7 +112,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     const client = getCommentClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
