@@ -174,11 +174,8 @@ export function createMetadata(options?: {
   const metadata = new grpc.Metadata();
   if (options?.token) {
     metadata.set("authorization", `Bearer ${options.token}`);
-  } else if (options?.apiToken || env.API_TOKEN) {
-    metadata.set(
-      "authorization",
-      `Bearer ${options?.apiToken || env.API_TOKEN}`,
-    );
+  } else if (options?.apiToken) {
+    metadata.set("authorization", `Bearer ${options.apiToken}`);
   }
   if (options?.ip) {
     metadata.set("x-forwarded-for", options.ip);
