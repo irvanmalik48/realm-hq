@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/server-auth";
 import {
   createMetadata,
   getLogClient,
@@ -8,7 +9,9 @@ import { formatGrpcError } from "@/lib/grpc/errors";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
@@ -17,7 +20,7 @@ export async function GET(req: NextRequest) {
     const traceId = searchParams.get("trace_id") || "";
 
     const client = getLogClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
@@ -41,14 +44,16 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const clearAll = searchParams.get("clear_all") === "true";
     const logId = searchParams.get("log_id") || undefined;
     const beforeTimestamp = searchParams.get("before_timestamp") || undefined;
 
     const client = getLogClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
