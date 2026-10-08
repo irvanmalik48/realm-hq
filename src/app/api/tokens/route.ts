@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/server-auth";
 import {
   createMetadata,
   getTokenClient,
@@ -8,9 +9,11 @@ import { formatGrpcError } from "@/lib/grpc/errors";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const client = getTokenClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(client, "ListTokens", {}, metadata);
     return NextResponse.json(data);
@@ -22,11 +25,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const body = await req.json();
 
     const client = getTokenClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
@@ -49,7 +54,9 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
@@ -61,7 +68,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     const client = getTokenClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(client, "RevokeToken", { id }, metadata);
     return NextResponse.json(data);
