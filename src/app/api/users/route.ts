@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
+import { requireAuth } from "@/lib/auth/server-auth";
 
 function getApiBaseUrl(): string {
   return (
@@ -10,16 +11,11 @@ function getApiBaseUrl(): string {
   );
 }
 
-function getAuthToken(req: NextRequest): string | undefined {
-  return (
-    req.cookies.get("realm_auth_token")?.value ||
-    env.API_TOKEN ||
-    process.env.API_TOKEN
-  );
-}
-
 export async function GET(req: NextRequest) {
   try {
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const url = new URL(`${getApiBaseUrl()}/v1/users`);
     const { searchParams } = req.nextUrl;
 
@@ -35,13 +31,10 @@ export async function GET(req: NextRequest) {
     const provider = searchParams.get("provider");
     if (provider) url.searchParams.set("provider", provider);
 
-    const token = getAuthToken(req);
     const headers: Record<string, string> = {
       Accept: "application/json",
+      Authorization: `Bearer ${auth.token}`,
     };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
 
     const res = await fetch(url.toString(), {
       method: "GET",
