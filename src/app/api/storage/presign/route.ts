@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/server-auth";
 import {
   createMetadata,
   getStorageClient,
@@ -8,7 +9,9 @@ import { formatGrpcError } from "@/lib/grpc/errors";
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const body = await req.json();
 
     if (!body.id) {
@@ -19,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const client = getStorageClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
