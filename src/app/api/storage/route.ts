@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth/server-auth";
 import {
   createMetadata,
   getStorageClient,
@@ -8,10 +9,12 @@ import { formatGrpcError } from "@/lib/grpc/errors";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const client = getStorageClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     if (searchParams.get("type") === "stats") {
       const stats = await promisifyUnary(
@@ -49,7 +52,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
@@ -61,7 +66,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     const client = getStorageClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(
       client,
@@ -83,7 +88,9 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const token = req.cookies.get("realm_auth_token")?.value;
+    const auth = requireAuth(req);
+    if (auth.error) return auth.error;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
@@ -95,7 +102,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     const client = getStorageClient();
-    const metadata = createMetadata({ token });
+    const metadata = createMetadata({ token: auth.token });
 
     const data = await promisifyUnary(client, "DeleteFile", { id }, metadata);
     return NextResponse.json(data);
