@@ -37,7 +37,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
   TableSkeleton,
@@ -1279,20 +1278,18 @@ function AdminsContent() {
 
 export default function AdminsPage() {
   return (
-    <DashboardShell>
-      <React.Suspense
-        fallback={
-          <TableSkeleton
-            icon={ShieldCheck}
-            title="Administrators"
-            description="Manage administrator accounts, assign roles, and control access permissions."
-            rowCount={8}
-            columnCount={5}
-          />
-        }
-      >
-        <AdminsContent />
-      </React.Suspense>
-    </DashboardShell>
+    <React.Suspense
+      fallback={
+        <TableSkeleton
+          icon={ShieldCheck}
+          title="Administrators"
+          description="Manage administrator accounts, assign roles, and control access permissions."
+          rowCount={8}
+          columnCount={5}
+        />
+      }
+    >
+      <AdminsContent />
+    </React.Suspense>
   );
 }
