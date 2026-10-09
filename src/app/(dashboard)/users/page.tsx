@@ -43,7 +43,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
   TableSkeleton,
@@ -1742,20 +1741,18 @@ function UsersContent() {
 
 export default function UsersPage() {
   return (
-    <DashboardShell>
-      <React.Suspense
-        fallback={
-          <TableSkeleton
-            icon={Users}
-            title="Platform Users"
-            description="Manage registered user accounts, inspect provider identities, and control status."
-            rowCount={8}
-            columnCount={6}
-          />
-        }
-      >
-        <UsersContent />
-      </React.Suspense>
-    </DashboardShell>
+    <React.Suspense
+      fallback={
+        <TableSkeleton
+          icon={Users}
+          title="Platform Users"
+          description="Manage registered user accounts, inspect provider identities, and control status."
+          rowCount={8}
+          columnCount={6}
+        />
+      }
+    >
+      <UsersContent />
+    </React.Suspense>
   );
 }
