@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
+import { DirectionalTransition } from "@/components/directional-transition";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
@@ -127,15 +128,13 @@ function PostEditSkeleton() {
 
 export default function EditPostPage() {
   return (
-    <React.Suspense
-      fallback={
-        <DashboardShell>
-          <PostEditSkeleton />
-        </DashboardShell>
-      }
-    >
-      <EditPostContent />
-    </React.Suspense>
+    <DirectionalTransition>
+      <DashboardShell>
+        <React.Suspense fallback={<PostEditSkeleton />}>
+          <EditPostContent />
+        </React.Suspense>
+      </DashboardShell>
+    </DirectionalTransition>
   );
 }
 
@@ -362,12 +361,20 @@ function EditPostContent() {
                 </div>
               </CardHeader>
               <CardContent>
-                <MarkdownEditor
-                  value={content}
-                  onChange={setContent}
-                  placeholder="Write your article in markdown..."
-                  minHeight="550px"
-                />
+                <React.Suspense
+                  fallback={
+                    <div className="min-h-[550px] rounded-lg border border-input bg-muted/10 animate-pulse flex items-center justify-center text-xs text-muted-foreground">
+                      Loading editor...
+                    </div>
+                  }
+                >
+                  <MarkdownEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Write your article in markdown..."
+                    minHeight="550px"
+                  />
+                </React.Suspense>
               </CardContent>
             </Card>
           </div>
