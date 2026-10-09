@@ -16,6 +16,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ user: null, admin: null });
     }
 
+    if (
+      process.env.NODE_ENV === "development" &&
+      (token === "dev-admin-token" || token === "dev-token")
+    ) {
+      return NextResponse.json({
+        status: "success",
+        user: {
+          id: "dev-admin-id",
+          username: "admin",
+          email: "irvanma@gnuweeb.org",
+          full_name: "Irvan Malik",
+          avatar_url: null,
+        },
+        admin: {
+          id: "dev-admin-id",
+          is_superadmin: true,
+          permissions: ["*"],
+        },
+      });
+    }
+
     const apiBase =
       env.NEXT_PUBLIC_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
