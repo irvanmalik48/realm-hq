@@ -43,8 +43,12 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
+import { DirectionalTransition } from "@/components/directional-transition";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { TableRowSkeleton } from "@/components/layout/table-skeleton";
+import {
+  TableRowSkeleton,
+  TableSkeleton,
+} from "@/components/layout/table-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,7 +105,7 @@ import {
 } from "@/lib/api/users";
 import { useAuth } from "@/lib/auth/auth-context";
 
-export default function UsersPage() {
+function UsersContent() {
   const router = useRouter();
   const { admin, hasPermission } = useAuth();
   const canManageUsers = admin?.is_superadmin || hasPermission("users:manage");
@@ -763,7 +767,7 @@ export default function UsersPage() {
   const selectedCount = Object.keys(rowSelection).length;
 
   return (
-    <DashboardShell>
+    <>
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1733,6 +1737,28 @@ export default function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardShell>
+    </>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <DirectionalTransition>
+      <DashboardShell>
+        <React.Suspense
+          fallback={
+            <TableSkeleton
+              icon={Users}
+              title="Platform Users"
+              description="Manage registered user accounts, inspect provider identities, and control status."
+              rowCount={8}
+              columnCount={6}
+            />
+          }
+        >
+          <UsersContent />
+        </React.Suspense>
+      </DashboardShell>
+    </DirectionalTransition>
   );
 }
