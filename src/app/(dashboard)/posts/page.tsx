@@ -39,7 +39,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
   TableSkeleton,
@@ -329,6 +328,7 @@ function PostsContent() {
             <div className="flex flex-col gap-1 max-w-[380px]">
               <Link
                 href={`/posts/${post.slug}`}
+                transitionTypes={["nav-forward"]}
                 className="font-medium text-foreground hover:text-primary transition-colors line-clamp-1"
               >
                 {post.title}
@@ -580,7 +580,13 @@ function PostsContent() {
           </Button>
           <Button
             size="sm"
-            render={<Link href="/posts/new" className="gap-1.5" />}
+            render={
+              <Link
+                href="/posts/new"
+                transitionTypes={["nav-forward"]}
+                className="gap-1.5"
+              />
+            }
           >
             <Plus data-icon="inline-start" />
             New Post
@@ -948,20 +954,18 @@ function PostsContent() {
 
 export default function PostsPage() {
   return (
-    <DashboardShell>
-      <React.Suspense
-        fallback={
-          <TableSkeleton
-            icon={FileText}
-            title="Articles & Posts"
-            description="Create, manage, and publish articles dynamically stored in PostgreSQL."
-            rowCount={8}
-            columnCount={6}
-          />
-        }
-      >
-        <PostsContent />
-      </React.Suspense>
-    </DashboardShell>
+    <React.Suspense
+      fallback={
+        <TableSkeleton
+          icon={FileText}
+          title="Articles & Posts"
+          description="Create, manage, and publish articles dynamically stored in PostgreSQL."
+          rowCount={8}
+          columnCount={6}
+        />
+      }
+    >
+      <PostsContent />
+    </React.Suspense>
   );
 }
