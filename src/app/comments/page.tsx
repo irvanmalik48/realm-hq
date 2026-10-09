@@ -41,7 +41,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DirectionalTransition } from "@/components/directional-transition";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { TableSkeleton } from "@/components/layout/table-skeleton";
 import {
@@ -2054,22 +2053,20 @@ function ThreadNodeCard({
 
 export default function CommentsPage() {
   return (
-    <DirectionalTransition>
-      <DashboardShell>
-        <React.Suspense
-          fallback={
-            <TableSkeleton
-              icon={MessageSquare}
-              title="Comments Moderation"
-              description="Manage and moderate community comments."
-              rowCount={8}
-              columnCount={5}
-            />
-          }
-        >
-          <CommentsContent />
-        </React.Suspense>
-      </DashboardShell>
-    </DirectionalTransition>
+    <DashboardShell>
+      <React.Suspense
+        fallback={
+          <TableSkeleton
+            icon={MessageSquare}
+            title="Comments Moderation"
+            description="Manage and moderate community comments."
+            rowCount={8}
+            columnCount={5}
+          />
+        }
+      >
+        <CommentsContent />
+      </React.Suspense>
+    </DashboardShell>
   );
 }
