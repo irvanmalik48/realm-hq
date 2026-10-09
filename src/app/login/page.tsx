@@ -311,7 +311,14 @@ function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          method="POST"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit(onSubmit)(e);
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-1.5">
             <Label htmlFor="identifier" className="text-xs font-medium">
               Identifier (Email or Username)
@@ -372,6 +379,32 @@ function LoginForm() {
               </>
             )}
           </Button>
+
+          {process.env.NODE_ENV === "development" && (
+            <Button
+              type="button"
+              variant="outline"
+              id="dev-quick-login-btn"
+              className="w-full mt-2 text-xs border-dashed cursor-pointer"
+              disabled={submitting}
+              onClick={async () => {
+                setSubmitting(true);
+                try {
+                  const res = await login({
+                    identifier: "admin",
+                    password: "password123",
+                  });
+                  if (res.success) {
+                    router.push("/");
+                  }
+                } finally {
+                  setSubmitting(false);
+                }
+              }}
+            >
+              ⚡ Dev Quick Login (Superadmin)
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>
