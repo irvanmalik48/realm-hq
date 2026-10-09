@@ -1,5 +1,5 @@
 export function AppFooter() {
-  const currentYear = new Date().getFullYear();
+  const currentYear = 2026;
 
   return (
     <footer
