@@ -43,7 +43,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DirectionalTransition } from "@/components/directional-transition";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
@@ -1743,22 +1742,20 @@ function UsersContent() {
 
 export default function UsersPage() {
   return (
-    <DirectionalTransition>
-      <DashboardShell>
-        <React.Suspense
-          fallback={
-            <TableSkeleton
-              icon={Users}
-              title="Platform Users"
-              description="Manage registered user accounts, inspect provider identities, and control status."
-              rowCount={8}
-              columnCount={6}
-            />
-          }
-        >
-          <UsersContent />
-        </React.Suspense>
-      </DashboardShell>
-    </DirectionalTransition>
+    <DashboardShell>
+      <React.Suspense
+        fallback={
+          <TableSkeleton
+            icon={Users}
+            title="Platform Users"
+            description="Manage registered user accounts, inspect provider identities, and control status."
+            rowCount={8}
+            columnCount={6}
+          />
+        }
+      >
+        <UsersContent />
+      </React.Suspense>
+    </DashboardShell>
   );
 }
