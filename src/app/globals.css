@@ -259,7 +259,23 @@ html.lenis body {
 ::view-transition-group(site-header),
 ::view-transition-group(site-sidebar),
 ::view-transition-group(site-footer) {
-  animation-duration: 0s;
+  /* biome-ignore lint/complexity/noImportantStyles: persistent element transition override */
+  animation: none !important;
+  z-index: 100;
+}
+
+::view-transition-old(site-header),
+::view-transition-old(site-sidebar),
+::view-transition-old(site-footer) {
+  /* biome-ignore lint/complexity/noImportantStyles: persistent element transition override */
+  display: none !important;
+}
+
+::view-transition-new(site-header),
+::view-transition-new(site-sidebar),
+::view-transition-new(site-footer) {
+  /* biome-ignore lint/complexity/noImportantStyles: persistent element transition override */
+  animation: none !important;
 }
 
 /* Allow pointer events through during transition */
