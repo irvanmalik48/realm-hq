@@ -283,6 +283,12 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* Suppress default root cross-fade so only targeted content animates */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
 /* Respect Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(*),
