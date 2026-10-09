@@ -2036,11 +2036,11 @@ function StorageContent() {
                 id="file-input"
                 type="file"
                 onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                className="cursor-pointer file:cursor-pointer"
+                className="cursor-pointer file:cursor-pointer max-w-full overflow-hidden text-ellipsis"
                 disabled={isUploading}
               />
               {selectedFile && (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground break-all">
                   Selected: {selectedFile.name} (
                   {formatBytes(selectedFile.size)})
                 </p>
