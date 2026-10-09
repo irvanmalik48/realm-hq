@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
+import { DirectionalTransition } from "@/components/directional-transition";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
@@ -101,261 +102,282 @@ export default function NewPostPage() {
   };
 
   return (
-    <DashboardShell>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <FileEdit className="h-5 w-5 text-primary" />
-              Create New Article
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Compose a new post using the WYSIWYG markdown editor.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              render={<Link href="/posts" className="gap-1.5" />}
-              className="flex-1 sm:flex-initial"
-            >
-              <ArrowLeft data-icon="inline-start" />
-              <span className="hidden xs:inline">Back to Posts</span>
-              <span className="xs:hidden">Back</span>
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit(false)}
-              className="gap-1.5 flex-1 sm:flex-initial"
-            >
-              <Save data-icon="inline-start" />
-              <span className="hidden xs:inline">Save Draft</span>
-              <span className="xs:hidden">Draft</span>
-            </Button>
-            <Button
-              size="sm"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit(true)}
-              className="gap-1.5 flex-1 sm:flex-initial"
-            >
-              <Send data-icon="inline-start" />
-              <span className="hidden xs:inline">Publish Article</span>
-              <span className="xs:hidden">Publish</span>
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row items-start gap-6 pb-12">
-          {/* Main Editor Section */}
-          <div className="flex-1 w-full flex flex-col gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold">
-                  Article Content
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <MarkdownEditor
-                  value={content}
-                  onChange={setContent}
-                  placeholder="Write your article in markdown or use visual formatting..."
-                  minHeight="500px"
-                />
-              </CardContent>
-            </Card>
+    <DirectionalTransition>
+      <DashboardShell>
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                <FileEdit className="h-5 w-5 text-primary" />
+                Create New Article
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Compose a new post using the WYSIWYG markdown editor.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                render={<Link href="/posts" className="gap-1.5" />}
+                className="flex-1 sm:flex-initial"
+              >
+                <ArrowLeft data-icon="inline-start" />
+                <span className="hidden xs:inline">Back to Posts</span>
+                <span className="xs:hidden">Back</span>
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={isSubmitting}
+                onClick={() => handleSubmit(false)}
+                className="gap-1.5 flex-1 sm:flex-initial"
+              >
+                <Save data-icon="inline-start" />
+                <span className="hidden xs:inline">Save Draft</span>
+                <span className="xs:hidden">Draft</span>
+              </Button>
+              <Button
+                size="sm"
+                disabled={isSubmitting}
+                onClick={() => handleSubmit(true)}
+                className="gap-1.5 flex-1 sm:flex-initial"
+              >
+                <Send data-icon="inline-start" />
+                <span className="hidden xs:inline">Publish Article</span>
+                <span className="xs:hidden">Publish</span>
+              </Button>
+            </div>
           </div>
 
-          {/* Sidebar Metadata Section */}
-          <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6">
-            {/* Publishing Settings */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold">
-                  Publish Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-medium text-foreground">
-                      Publish Immediately
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      Make article live on realm.
-                    </span>
-                  </div>
-                  <Switch
-                    checked={isPublished}
-                    onCheckedChange={setIsPublished}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                  <Button
-                    size="sm"
-                    disabled={isSubmitting}
-                    onClick={() => handleSubmit(isPublished)}
-                    className="w-full gap-1.5"
+          <div className="flex flex-col lg:flex-row items-start gap-6 pb-12">
+            {/* Main Editor Section */}
+            <div className="flex-1 w-full flex flex-col gap-6">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-semibold">
+                    Article Content
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <React.Suspense
+                    fallback={
+                      <div className="min-h-[500px] rounded-lg border border-input bg-muted/10 animate-pulse flex items-center justify-center text-xs text-muted-foreground">
+                        Loading editor...
+                      </div>
+                    }
                   >
-                    {isPublished ? (
-                      <>
-                        <Send data-icon="inline-start" />
-                        Publish Article
-                      </>
-                    ) : (
-                      <>
-                        <Save data-icon="inline-start" />
-                        Save as Draft
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Article Metadata Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold">
-                  Article Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FieldGroup className="flex flex-col gap-4">
-                  {/* Title */}
-                  <Field className="flex flex-col gap-1.5">
-                    <FieldLabel htmlFor="title" className="text-xs font-medium">
-                      Title <span className="text-destructive">*</span>
-                    </FieldLabel>
-                    <Input
-                      id="title"
-                      placeholder="e.g. My Arch Linux Setup"
-                      value={title}
-                      onChange={handleTitleChange}
-                      className="h-9 text-xs"
+                    <MarkdownEditor
+                      value={content}
+                      onChange={setContent}
+                      placeholder="Write your article in markdown or use visual formatting..."
+                      minHeight="500px"
                     />
-                  </Field>
+                  </React.Suspense>
+                </CardContent>
+              </Card>
+            </div>
 
-                  {/* Slug */}
-                  <Field className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
+            {/* Sidebar Metadata Section */}
+            <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6">
+              {/* Publishing Settings */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">
+                    Publish Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-medium text-foreground">
+                        Publish Immediately
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        Make article live on realm.
+                      </span>
+                    </div>
+                    <Switch
+                      checked={isPublished}
+                      onCheckedChange={setIsPublished}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                    <Button
+                      size="sm"
+                      disabled={isSubmitting}
+                      onClick={() => handleSubmit(isPublished)}
+                      className="w-full gap-1.5"
+                    >
+                      {isPublished ? (
+                        <>
+                          <Send data-icon="inline-start" />
+                          Publish Article
+                        </>
+                      ) : (
+                        <>
+                          <Save data-icon="inline-start" />
+                          Save as Draft
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Article Metadata Card */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">
+                    Article Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FieldGroup className="flex flex-col gap-4">
+                    {/* Title */}
+                    <Field className="flex flex-col gap-1.5">
                       <FieldLabel
-                        htmlFor="slug"
+                        htmlFor="title"
                         className="text-xs font-medium"
                       >
-                        URL Slug
+                        Title <span className="text-destructive">*</span>
                       </FieldLabel>
-                      <button
-                        type="button"
-                        onClick={() => setAutoSlug(!autoSlug)}
-                        className="text-[11px] text-primary hover:underline cursor-pointer"
-                      >
-                        {autoSlug ? "Manual Slug" : "Auto Slug"}
-                      </button>
-                    </div>
-                    <Input
-                      id="slug"
-                      placeholder="my-arch-linux-setup"
-                      value={slug}
-                      onChange={(e) => {
-                        setAutoSlug(false);
-                        setSlug(e.target.value);
-                      }}
-                      className="h-9 font-mono text-xs"
-                    />
-                    <FieldDescription className="text-[11px] text-muted-foreground">
-                      Served at /blog/{slug || "..."}
-                    </FieldDescription>
-                  </Field>
-
-                  {/* Description */}
-                  <Field className="flex flex-col gap-1.5">
-                    <FieldLabel htmlFor="desc" className="text-xs font-medium">
-                      Summary / Excerpt
-                    </FieldLabel>
-                    <Textarea
-                      id="desc"
-                      placeholder="Short description displayed on article cards..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="min-h-[80px] text-xs resize-none"
-                    />
-                  </Field>
-
-                  {/* Tags */}
-                  <Field className="flex flex-col gap-1.5">
-                    <FieldLabel className="text-xs font-medium">
-                      Tags
-                    </FieldLabel>
-                    <div className="flex items-center gap-1.5">
                       <Input
-                        placeholder="Add tag and press Enter"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleAddTag();
-                          }
-                        }}
-                        className="h-8 text-xs"
+                        id="title"
+                        placeholder="e.g. My Arch Linux Setup"
+                        value={title}
+                        onChange={handleTitleChange}
+                        className="h-9 text-xs"
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="xs"
-                        onClick={handleAddTag}
-                        className="h-8 px-2"
-                      >
-                        <Plus data-icon="inline-start" />
-                      </Button>
-                    </div>
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="h-5 gap-1 px-1.5 text-[10px]"
-                          >
-                            {tag}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTag(tag)}
-                              className="hover:text-destructive cursor-pointer"
-                              aria-label={`Remove tag ${tag}`}
-                            >
-                              <X className="size-2.5" />
-                              <span className="sr-only">Remove tag {tag}</span>
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </Field>
+                    </Field>
 
-                  {/* Cover Image */}
-                  <Field className="flex flex-col gap-1.5">
-                    <FieldLabel htmlFor="cover" className="text-xs font-medium">
-                      Cover Image URL
-                    </FieldLabel>
-                    <Input
-                      id="cover"
-                      placeholder="https://images.unsplash.com/..."
-                      value={coverImage}
-                      onChange={(e) => setCoverImage(e.target.value)}
-                      className="h-8 text-xs font-mono"
-                    />
-                  </Field>
-                </FieldGroup>
-              </CardContent>
-            </Card>
+                    {/* Slug */}
+                    <Field className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <FieldLabel
+                          htmlFor="slug"
+                          className="text-xs font-medium"
+                        >
+                          URL Slug
+                        </FieldLabel>
+                        <button
+                          type="button"
+                          onClick={() => setAutoSlug(!autoSlug)}
+                          className="text-[11px] text-primary hover:underline cursor-pointer"
+                        >
+                          {autoSlug ? "Manual Slug" : "Auto Slug"}
+                        </button>
+                      </div>
+                      <Input
+                        id="slug"
+                        placeholder="my-arch-linux-setup"
+                        value={slug}
+                        onChange={(e) => {
+                          setAutoSlug(false);
+                          setSlug(e.target.value);
+                        }}
+                        className="h-9 font-mono text-xs"
+                      />
+                      <FieldDescription className="text-[11px] text-muted-foreground">
+                        Served at /blog/{slug || "..."}
+                      </FieldDescription>
+                    </Field>
+
+                    {/* Description */}
+                    <Field className="flex flex-col gap-1.5">
+                      <FieldLabel
+                        htmlFor="desc"
+                        className="text-xs font-medium"
+                      >
+                        Summary / Excerpt
+                      </FieldLabel>
+                      <Textarea
+                        id="desc"
+                        placeholder="Short description displayed on article cards..."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="min-h-[80px] text-xs resize-none"
+                      />
+                    </Field>
+
+                    {/* Tags */}
+                    <Field className="flex flex-col gap-1.5">
+                      <FieldLabel className="text-xs font-medium">
+                        Tags
+                      </FieldLabel>
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          placeholder="Add tag and press Enter"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleAddTag();
+                            }
+                          }}
+                          className="h-8 text-xs"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          onClick={handleAddTag}
+                          className="h-8 px-2"
+                        >
+                          <Plus data-icon="inline-start" />
+                        </Button>
+                      </div>
+                      {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {tags.map((tag) => (
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="h-5 gap-1 px-1.5 text-[10px]"
+                            >
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTag(tag)}
+                                className="hover:text-destructive cursor-pointer"
+                                aria-label={`Remove tag ${tag}`}
+                              >
+                                <X className="size-2.5" />
+                                <span className="sr-only">
+                                  Remove tag {tag}
+                                </span>
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </Field>
+
+                    {/* Cover Image */}
+                    <Field className="flex flex-col gap-1.5">
+                      <FieldLabel
+                        htmlFor="cover"
+                        className="text-xs font-medium"
+                      >
+                        Cover Image URL
+                      </FieldLabel>
+                      <Input
+                        id="cover"
+                        placeholder="https://images.unsplash.com/..."
+                        value={coverImage}
+                        onChange={(e) => setCoverImage(e.target.value)}
+                        className="h-8 text-xs font-mono"
+                      />
+                    </Field>
+                  </FieldGroup>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
-      </div>
-    </DashboardShell>
+      </DashboardShell>
+    </DirectionalTransition>
   );
 }
