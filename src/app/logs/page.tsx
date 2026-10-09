@@ -37,6 +37,7 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
+import { DirectionalTransition } from "@/components/directional-transition";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
@@ -953,20 +954,22 @@ function LogsContent() {
 
 export default function LogsPage() {
   return (
-    <DashboardShell>
-      <React.Suspense
-        fallback={
-          <TableSkeleton
-            icon={Terminal}
-            title="System Logs"
-            description="Real-time activity logs, diagnostic events, and system errors."
-            rowCount={10}
-            columnCount={5}
-          />
-        }
-      >
-        <LogsContent />
-      </React.Suspense>
-    </DashboardShell>
+    <DirectionalTransition>
+      <DashboardShell>
+        <React.Suspense
+          fallback={
+            <TableSkeleton
+              icon={Terminal}
+              title="System Logs"
+              description="Real-time activity logs, diagnostic events, and system errors."
+              rowCount={10}
+              columnCount={5}
+            />
+          }
+        >
+          <LogsContent />
+        </React.Suspense>
+      </DashboardShell>
+    </DirectionalTransition>
   );
 }
