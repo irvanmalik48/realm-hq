@@ -12,6 +12,7 @@ import {
   LogOut,
   Mail,
   MessageSquare,
+  Settings,
   ShieldCheck,
   Terminal,
   UserCheck,
@@ -139,12 +140,152 @@ const navGroups: NavGroup[] = [
         href: "/tokens",
         icon: KeyRound,
       },
+      {
+        title: "Settings",
+        href: "/settings",
+        icon: Settings,
+      },
     ],
   },
 ];
 
-export function AppSidebar() {
+function SidebarNavItems({
+  handleNavClick,
+  admin,
+  hasPermission,
+}: {
+  handleNavClick: () => void;
+  admin: ReturnType<typeof useAuth>["admin"];
+  hasPermission: ReturnType<typeof useAuth>["hasPermission"];
+}) {
   const pathname = usePathname();
+
+  return (
+    <>
+      {navGroups.map((group) => {
+        const visibleItems = group.items.filter((item) => {
+          if (item.superadminOnly && !admin?.is_superadmin) {
+            return false;
+          }
+          if (item.permission && !hasPermission(item.permission)) {
+            return false;
+          }
+          return true;
+        });
+
+        if (visibleItems.length === 0) return null;
+
+        return (
+          <SidebarGroup
+            key={group.label}
+            className="p-2 py-1.5 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:py-1"
+          >
+            <SidebarGroupLabel className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/80 px-2 mb-1">
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
+                {visibleItems.map((item) => {
+                  const isActive =
+                    item.href === "/"
+                      ? pathname === "/"
+                      : pathname.startsWith(item.href);
+                  const Icon = item.icon;
+
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        tooltip={item.title}
+                        onClick={handleNavClick}
+                        render={
+                          <Link
+                            href={item.href}
+                            transitionTypes={["nav-forward"]}
+                          />
+                        }
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        );
+      })}
+    </>
+  );
+}
+
+function SidebarNavFallback({
+  handleNavClick,
+  admin,
+  hasPermission,
+}: {
+  handleNavClick: () => void;
+  admin: ReturnType<typeof useAuth>["admin"];
+  hasPermission: ReturnType<typeof useAuth>["hasPermission"];
+}) {
+  return (
+    <>
+      {navGroups.map((group) => {
+        const visibleItems = group.items.filter((item) => {
+          if (item.superadminOnly && !admin?.is_superadmin) {
+            return false;
+          }
+          if (item.permission && !hasPermission(item.permission)) {
+            return false;
+          }
+          return true;
+        });
+
+        if (visibleItems.length === 0) return null;
+
+        return (
+          <SidebarGroup
+            key={group.label}
+            className="p-2 py-1.5 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:py-1"
+          >
+            <SidebarGroupLabel className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/80 px-2 mb-1">
+              {group.label}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
+                {visibleItems.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        isActive={false}
+                        tooltip={item.title}
+                        onClick={handleNavClick}
+                        render={
+                          <Link
+                            href={item.href}
+                            transitionTypes={["nav-forward"]}
+                          />
+                        }
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        );
+      })}
+    </>
+  );
+}
+
+export function AppSidebar() {
   const { user, admin, logout, hasPermission } = useAuth();
   const { state, isMobile, setOpenMobile } = useSidebar();
 
@@ -204,60 +345,21 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="no-scrollbar">
-        {navGroups.map((group) => {
-          const visibleItems = group.items.filter((item) => {
-            if (item.superadminOnly && !admin?.is_superadmin) {
-              return false;
-            }
-            if (item.permission && !hasPermission(item.permission)) {
-              return false;
-            }
-            return true;
-          });
-
-          if (visibleItems.length === 0) return null;
-
-          return (
-            <SidebarGroup
-              key={group.label}
-              className="p-2 py-1.5 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:py-1"
-            >
-              <SidebarGroupLabel className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/80 px-2 mb-1">
-                {group.label}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
-                  {visibleItems.map((item) => {
-                    const isActive =
-                      item.href === "/"
-                        ? pathname === "/"
-                        : pathname.startsWith(item.href);
-                    const Icon = item.icon;
-
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          tooltip={item.title}
-                          onClick={handleNavClick}
-                          render={
-                            <Link
-                              href={item.href}
-                              transitionTypes={["nav-forward"]}
-                            />
-                          }
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          );
-        })}
+        <React.Suspense
+          fallback={
+            <SidebarNavFallback
+              handleNavClick={handleNavClick}
+              admin={admin}
+              hasPermission={hasPermission}
+            />
+          }
+        >
+          <SidebarNavItems
+            handleNavClick={handleNavClick}
+            admin={admin}
+            hasPermission={hasPermission}
+          />
+        </React.Suspense>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 group-data-[collapsible=icon]:p-2 overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)]">
