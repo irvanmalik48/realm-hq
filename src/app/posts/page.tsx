@@ -39,8 +39,12 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
+import { DirectionalTransition } from "@/components/directional-transition";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { TableRowSkeleton } from "@/components/layout/table-skeleton";
+import {
+  TableRowSkeleton,
+  TableSkeleton,
+} from "@/components/layout/table-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,7 +95,7 @@ import {
   updatePost,
 } from "@/lib/api/posts";
 
-export default function PostsPage() {
+function PostsContent() {
   const [posts, setPosts] = React.useState<PostSummary[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -546,409 +550,421 @@ export default function PostsPage() {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
+  const selectedRowsCount = Object.keys(rowSelection).length;
 
   return (
-    <DashboardShell>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Articles & Posts
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Create, manage, and publish articles dynamically stored in
-              PostgreSQL.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => loadPosts(true)}
-              disabled={isRefreshing}
-              className="gap-1.5"
-            >
-              <RefreshCw
-                data-icon="inline-start"
-                className={isRefreshing ? "animate-spin" : ""}
-              />
-              Refresh
-            </Button>
-            <Button
-              size="sm"
-              render={<Link href="/posts/new" className="gap-1.5" />}
-            >
-              <Plus data-icon="inline-start" />
-              New Post
-            </Button>
-          </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Articles & Posts
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Create, manage, and publish articles dynamically stored in
+            PostgreSQL.
+          </p>
         </div>
-        {/* Metric Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                Total Articles
-              </span>
-              <FileText className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                {metrics.total}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                Published
-              </span>
-              <CheckCircle2 className="size-4 text-emerald-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                {metrics.published}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                Drafts
-              </span>
-              <Clock className="size-4 text-amber-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                {metrics.draft}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                Unique Tags
-              </span>
-              <Tag className="size-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                {metrics.tagsCount}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadPosts(true)}
+            disabled={isRefreshing}
+            className="gap-1.5"
+          >
+            <RefreshCw
+              data-icon="inline-start"
+              className={isRefreshing ? "animate-spin" : ""}
+            />
+            Refresh
+          </Button>
+          <Button
+            size="sm"
+            render={<Link href="/posts/new" className="gap-1.5" />}
+          >
+            <Plus data-icon="inline-start" />
+            New Post
+          </Button>
         </div>
-
-        {/* Filters and Search Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="flex flex-1 flex-wrap items-center gap-2">
-            <div className="relative flex-1 sm:max-w-xs md:max-w-sm min-w-[200px]">
-              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Search by title, slug, or content..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/50"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Clear search"
-                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <X className="size-4" />
-                </button>
-              )}
+      </div>
+      {/* Metric Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Total Articles
+            </span>
+            <FileText className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">
+              {metrics.total}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Status Filter */}
-            <Select
-              value={statusFilter}
-              onValueChange={(val) => {
-                if (val) setStatusFilter(val);
-              }}
-            >
-              <SelectTrigger className="h-9 text-xs min-w-[130px] bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
-                <div className="flex items-center gap-1.5 truncate">
-                  <SlidersHorizontal className="size-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-muted-foreground font-normal">
-                    Status:
-                  </span>
-                  <SelectValue>
-                    {(val) => {
-                      if (val === "published") {
-                        return (
-                          <span className="inline-flex items-center gap-1.5 font-medium text-emerald-500">
-                            <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
-                            Published
-                          </span>
-                        );
-                      }
-                      if (val === "draft") {
-                        return (
-                          <span className="inline-flex items-center gap-1.5 font-medium text-amber-500">
-                            <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
-                            Drafts
-                          </span>
-                        );
-                      }
-                      return (
-                        <span className="font-medium text-foreground">All</span>
-                      );
-                    }}
-                  </SelectValue>
-                </div>
-              </SelectTrigger>
-              <SelectContent align="start" className="min-w-[150px]">
-                <SelectItem value="all" className="text-xs">
-                  <span className="flex items-center gap-2">
-                    <span className="size-1.5 rounded-full bg-muted-foreground/30" />
-                    All Status
-                  </span>
-                </SelectItem>
-                <SelectItem value="published" className="text-xs">
-                  <span className="flex items-center gap-2">
-                    <span className="size-1.5 rounded-full bg-emerald-500" />
-                    Published
-                  </span>
-                </SelectItem>
-                <SelectItem value="draft" className="text-xs">
-                  <span className="flex items-center gap-2">
-                    <span className="size-1.5 rounded-full bg-amber-500" />
-                    Drafts
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Published
+            </span>
+            <CheckCircle2 className="size-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {metrics.published}
+            </div>
+          </CardContent>
+        </Card>
 
-            {/* Tag Filter */}
-            <Select
-              value={tagFilter}
-              onValueChange={(val) => {
-                if (val) setTagFilter(val);
-              }}
-            >
-              <SelectTrigger className="h-9 text-xs min-w-[125px] bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
-                <div className="flex items-center gap-1.5 truncate">
-                  <Tag className="size-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-muted-foreground font-normal">
-                    Tag:
-                  </span>
-                  <SelectValue>
-                    {(val) => (
-                      <span className="font-medium text-foreground truncate max-w-[100px]">
-                        {val === "all" ? "All" : `#${val}`}
-                      </span>
-                    )}
-                  </SelectValue>
-                </div>
-              </SelectTrigger>
-              <SelectContent align="start" className="min-w-[160px] max-h-64">
-                <SelectItem value="all" className="text-xs">
-                  All Tags ({allTags.length})
-                </SelectItem>
-                {allTags.map((tag) => (
-                  <SelectItem key={tag} value={tag} className="text-xs">
-                    <span className="text-muted-foreground mr-1">#</span>
-                    {tag}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Drafts
+            </span>
+            <Clock className="size-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              {metrics.draft}
+            </div>
+          </CardContent>
+        </Card>
 
-            {(searchQuery || statusFilter !== "all" || tagFilter !== "all") && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery("");
-                  setStatusFilter("all");
-                  setTagFilter("all");
-                }}
-                className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border/80 hover:border-border hover:bg-accent/40 gap-1.5 transition-colors"
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Unique Tags
+            </span>
+            <Tag className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">
+              {metrics.tagsCount}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters and Search Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <div className="relative flex-1 sm:max-w-xs md:max-w-sm min-w-[200px]">
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search by title, slug, or content..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/50"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
-                <RotateCcw className="size-3.5" />
-                <span>Reset</span>
-                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground/80">
-                  {(statusFilter !== "all" ? 1 : 0) +
-                    (tagFilter !== "all" ? 1 : 0) +
-                    (searchQuery ? 1 : 0)}
-                </span>
-              </Button>
+                <X className="size-4" />
+              </button>
             )}
           </div>
 
-          <div className="hidden lg:flex items-center text-xs text-muted-foreground shrink-0">
-            Showing{" "}
-            <span className="font-medium text-foreground mx-1">
-              {filteredData.length}
-            </span>{" "}
-            of {posts.length} articles
-          </div>
+          {/* Status Filter */}
+          <Select
+            value={statusFilter}
+            onValueChange={(val) => {
+              if (val) setStatusFilter(val);
+            }}
+          >
+            <SelectTrigger className="h-9 text-xs min-w-[130px] bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+              <div className="flex items-center gap-1.5 truncate">
+                <SlidersHorizontal className="size-3.5 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground font-normal">
+                  Status:
+                </span>
+                <SelectValue>
+                  {(val) => {
+                    if (val === "published") {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 font-medium text-emerald-500">
+                          <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          Published
+                        </span>
+                      );
+                    }
+                    if (val === "draft") {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 font-medium text-amber-500">
+                          <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                          Drafts
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="font-medium text-foreground">All</span>
+                    );
+                  }}
+                </SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent align="start" className="min-w-[150px]">
+              <SelectItem value="all" className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-muted-foreground/30" />
+                  All Status
+                </span>
+              </SelectItem>
+              <SelectItem value="published" className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  Published
+                </span>
+              </SelectItem>
+              <SelectItem value="draft" className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-amber-500" />
+                  Drafts
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Tag Filter */}
+          <Select
+            value={tagFilter}
+            onValueChange={(val) => {
+              if (val) setTagFilter(val);
+            }}
+          >
+            <SelectTrigger className="h-9 text-xs min-w-[125px] bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+              <div className="flex items-center gap-1.5 truncate">
+                <Tag className="size-3.5 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground font-normal">Tag:</span>
+                <SelectValue>
+                  {(val) => (
+                    <span className="font-medium text-foreground truncate max-w-[100px]">
+                      {val === "all" ? "All" : `#${val}`}
+                    </span>
+                  )}
+                </SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent align="start" className="min-w-[160px] max-h-64">
+              <SelectItem value="all" className="text-xs">
+                All Tags ({allTags.length})
+              </SelectItem>
+              {allTags.map((tag) => (
+                <SelectItem key={tag} value={tag} className="text-xs">
+                  <span className="text-muted-foreground mr-1">#</span>
+                  {tag}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {(searchQuery || statusFilter !== "all" || tagFilter !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("all");
+                setTagFilter("all");
+              }}
+              className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border/80 hover:border-border hover:bg-accent/40 gap-1.5 transition-colors"
+            >
+              <RotateCcw className="size-3.5" />
+              <span>Reset</span>
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground/80">
+                {(statusFilter !== "all" ? 1 : 0) +
+                  (tagFilter !== "all" ? 1 : 0) +
+                  (searchQuery ? 1 : 0)}
+              </span>
+            </Button>
+          )}
         </div>
 
-        {/* Posts Table */}
-        <div className="rounded-lg border border-border bg-card shadow-xs overflow-hidden">
-          <Table className="min-w-[750px]">
-            <TableHeader className="bg-muted/40">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
+        <div className="hidden lg:flex items-center text-xs text-muted-foreground shrink-0">
+          Showing{" "}
+          <span className="font-medium text-foreground mx-1">
+            {filteredData.length}
+          </span>{" "}
+          of {posts.length} articles
+        </div>
+      </div>
+
+      {/* Posts Table */}
+      <div className="rounded-lg border border-border bg-card shadow-xs overflow-hidden">
+        <Table className="min-w-[750px]">
+          <TableHeader className="bg-muted/40">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRowSkeleton
+                columnCount={columns.length}
+                rowCount={pagination.pageSize || 8}
+              />
+            ) : table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className="hover:bg-muted/30 transition-colors"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRowSkeleton
-                  columnCount={columns.length}
-                  rowCount={pagination.pageSize || 8}
-                />
-              ) : table.getRowModel().rows.length > 0 ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className="hover:bg-muted/30 transition-colors"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-48 text-center"
-                  >
-                    <Empty className="py-12 border-0">
-                      <EmptyHeader>
-                        <EmptyTitle>No articles found</EmptyTitle>
-                        <EmptyDescription>
-                          {searchQuery ||
-                          statusFilter !== "all" ||
-                          tagFilter !== "all"
-                            ? "Try adjusting your search criteria or clear active filters."
-                            : "No articles found in the database. Create your first post using the button above."}
-                        </EmptyDescription>
-                      </EmptyHeader>
-                    </Empty>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-48 text-center"
+                >
+                  <Empty className="py-12 border-0">
+                    <EmptyHeader>
+                      <EmptyTitle>No articles found</EmptyTitle>
+                      <EmptyDescription>
+                        {searchQuery ||
+                        statusFilter !== "all" ||
+                        tagFilter !== "all"
+                          ? "Try adjusting your search criteria or clear active filters."
+                          : "No articles found in the database. Create your first post using the button above."}
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
 
-          <DataTablePagination
-            table={table}
-            totalCount={filteredData.length}
-            pageSizeOptions={[10, 20, 50, 100]}
-          />
-        </div>
-
-        {/* Floating Bulk Actions Bar */}
-        <DataTableBulkActions
-          selectedCount={selectedRowsCount}
+        <DataTablePagination
+          table={table}
           totalCount={filteredData.length}
-          onClearSelection={() => setRowSelection({})}
-        >
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleBulkSetPublish(true)}
-            className="h-7 gap-1 text-xs"
-          >
-            <CheckCircle2 data-icon="inline-start" />
-            Publish
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleBulkSetPublish(false)}
-            className="h-7 gap-1 text-xs"
-          >
-            <EyeOff data-icon="inline-start" />
-            Draft
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => setIsBulkDeleting(true)}
-            className="h-7 gap-1 text-xs"
-          >
-            <Trash2 data-icon="inline-start" />
-            Delete
-          </Button>
-        </DataTableBulkActions>
-
-        {/* Delete Single Post Alert Dialog */}
-        <AlertDialog
-          open={!!postToDelete}
-          onOpenChange={(open) => !open && setPostToDelete(null)}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Article</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete &quot;{postToDelete?.title}
-                &quot;? This action cannot be undone and will permanently remove
-                this post and its revisions from PostgreSQL.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                onClick={handleDeletePost}
-              >
-                Delete Article
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Bulk Delete Alert Dialog */}
-        <AlertDialog open={isBulkDeleting} onOpenChange={setIsBulkDeleting}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Selected Articles</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to permanently delete {selectedRowsCount}{" "}
-                selected articles? This action is irreversible.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                onClick={handleBulkDelete}
-              >
-                Delete {selectedRowsCount} Articles
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          pageSizeOptions={[10, 20, 50, 100]}
+        />
       </div>
-    </DashboardShell>
+
+      {/* Floating Bulk Actions Bar */}
+      <DataTableBulkActions
+        selectedCount={selectedRowsCount}
+        totalCount={filteredData.length}
+        onClearSelection={() => setRowSelection({})}
+      >
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleBulkSetPublish(true)}
+          className="h-7 gap-1 text-xs"
+        >
+          <CheckCircle2 data-icon="inline-start" />
+          Publish
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleBulkSetPublish(false)}
+          className="h-7 gap-1 text-xs"
+        >
+          <EyeOff data-icon="inline-start" />
+          Draft
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => setIsBulkDeleting(true)}
+          className="h-7 gap-1 text-xs"
+        >
+          <Trash2 data-icon="inline-start" />
+          Delete
+        </Button>
+      </DataTableBulkActions>
+
+      {/* Delete Single Post Alert Dialog */}
+      <AlertDialog
+        open={!!postToDelete}
+        onOpenChange={(open) => !open && setPostToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Article</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{postToDelete?.title}
+              &quot;? This action cannot be undone and will permanently remove
+              this post and its revisions from PostgreSQL.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleDeletePost}>
+              Delete Article
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Alert Dialog */}
+      <AlertDialog open={isBulkDeleting} onOpenChange={setIsBulkDeleting}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Selected Articles</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete {selectedRowsCount}{" "}
+              selected articles? This action is irreversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleBulkDelete}>
+              Delete {selectedRowsCount} Articles
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+export default function PostsPage() {
+  return (
+    <DirectionalTransition>
+      <DashboardShell>
+        <React.Suspense
+          fallback={
+            <TableSkeleton
+              icon={FileText}
+              title="Articles & Posts"
+              description="Create, manage, and publish articles dynamically stored in PostgreSQL."
+              rowCount={8}
+              columnCount={6}
+            />
+          }
+        >
+          <PostsContent />
+        </React.Suspense>
+      </DashboardShell>
+    </DirectionalTransition>
   );
 }
