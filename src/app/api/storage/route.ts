@@ -62,6 +62,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    if (file.size > 50 * 1024 * 1024) {
+      return NextResponse.json(
+        {
+          error: `File exceeds the 50 MB maximum upload limit (${(file.size / (1024 * 1024)).toFixed(1)} MB)`,
+        },
+        { status: 413 },
+      );
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
