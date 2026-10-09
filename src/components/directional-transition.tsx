@@ -10,12 +10,12 @@ export function DirectionalTransition({
       enter={{
         "nav-forward": "nav-forward",
         "nav-back": "nav-back",
-        default: "none",
+        default: "fade-in",
       }}
       exit={{
         "nav-forward": "nav-forward",
         "nav-back": "nav-back",
-        default: "none",
+        default: "fade-out",
       }}
       default="none"
     >
