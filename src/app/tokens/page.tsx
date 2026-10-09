@@ -37,7 +37,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DirectionalTransition } from "@/components/directional-transition";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
@@ -1061,22 +1060,20 @@ function TokensContent() {
 
 export default function TokensPage() {
   return (
-    <DirectionalTransition>
-      <DashboardShell>
-        <React.Suspense
-          fallback={
-            <TableSkeleton
-              icon={KeyRound}
-              title="API Keys"
-              description="Create and manage API keys to authenticate external apps and services."
-              rowCount={8}
-              columnCount={6}
-            />
-          }
-        >
-          <TokensContent />
-        </React.Suspense>
-      </DashboardShell>
-    </DirectionalTransition>
+    <DashboardShell>
+      <React.Suspense
+        fallback={
+          <TableSkeleton
+            icon={KeyRound}
+            title="API Keys"
+            description="Create and manage API keys to authenticate external apps and services."
+            rowCount={8}
+            columnCount={6}
+          />
+        }
+      >
+        <TokensContent />
+      </React.Suspense>
+    </DashboardShell>
   );
 }
