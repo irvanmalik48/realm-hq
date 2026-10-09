@@ -197,6 +197,7 @@ function Sidebar({
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
+              viewTransitionName: "site-sidebar",
             } as React.CSSProperties
           }
           side={side}
