@@ -39,7 +39,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DirectionalTransition } from "@/components/directional-transition";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
@@ -949,22 +948,20 @@ function PostsContent() {
 
 export default function PostsPage() {
   return (
-    <DirectionalTransition>
-      <DashboardShell>
-        <React.Suspense
-          fallback={
-            <TableSkeleton
-              icon={FileText}
-              title="Articles & Posts"
-              description="Create, manage, and publish articles dynamically stored in PostgreSQL."
-              rowCount={8}
-              columnCount={6}
-            />
-          }
-        >
-          <PostsContent />
-        </React.Suspense>
-      </DashboardShell>
-    </DirectionalTransition>
+    <DashboardShell>
+      <React.Suspense
+        fallback={
+          <TableSkeleton
+            icon={FileText}
+            title="Articles & Posts"
+            description="Create, manage, and publish articles dynamically stored in PostgreSQL."
+            rowCount={8}
+            columnCount={6}
+          />
+        }
+      >
+        <PostsContent />
+      </React.Suspense>
+    </DashboardShell>
   );
 }
