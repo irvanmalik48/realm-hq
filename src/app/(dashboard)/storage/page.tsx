@@ -51,7 +51,6 @@ import {
 import * as React from "react";
 import { toast } from "sonner";
 import { DataTablePagination } from "@/components/data-table";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   StorageGridSkeleton,
   TableRowSkeleton,
@@ -2236,20 +2235,18 @@ function StorageContent() {
 
 export default function StoragePage() {
   return (
-    <DashboardShell>
-      <React.Suspense
-        fallback={
-          <TableSkeleton
-            icon={HardDrive}
-            title="File Storage"
-            description="Manage uploaded media, documents, and bucket assets"
-            rowCount={8}
-            columnCount={6}
-          />
-        }
-      >
-        <StorageContent />
-      </React.Suspense>
-    </DashboardShell>
+    <React.Suspense
+      fallback={
+        <TableSkeleton
+          icon={HardDrive}
+          title="File Storage"
+          description="Manage uploaded media, documents, and bucket assets"
+          rowCount={8}
+          columnCount={6}
+        />
+      }
+    >
+      <StorageContent />
+    </React.Suspense>
   );
 }
