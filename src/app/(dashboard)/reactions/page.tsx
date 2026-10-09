@@ -36,7 +36,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
   TableSkeleton,
@@ -681,20 +680,18 @@ function ReactionsContent() {
 
 export default function ReactionsPage() {
   return (
-    <DashboardShell>
-      <React.Suspense
-        fallback={
-          <TableSkeleton
-            icon={Heart}
-            title="Post Reactions"
-            description="Overview of likes and reactions across published articles."
-            rowCount={8}
-            columnCount={4}
-          />
-        }
-      >
-        <ReactionsContent />
-      </React.Suspense>
-    </DashboardShell>
+    <React.Suspense
+      fallback={
+        <TableSkeleton
+          icon={Heart}
+          title="Post Reactions"
+          description="Overview of likes and reactions across published articles."
+          rowCount={8}
+          columnCount={4}
+        />
+      }
+    >
+      <ReactionsContent />
+    </React.Suspense>
   );
 }
