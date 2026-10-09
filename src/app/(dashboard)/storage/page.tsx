@@ -324,6 +324,13 @@ function StorageContent() {
   }, [fetchFiles]);
 
   const uploadSingleFile = async (file: File) => {
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error(
+        `"${file.name}" exceeds the 50 MB upload limit (${(file.size / (1024 * 1024)).toFixed(1)} MB)`,
+      );
+      return;
+    }
+
     setIsUploading(true);
     const toastId = toast.loading(`Uploading & compressing ${file.name}...`);
     try {
@@ -2022,8 +2029,8 @@ function StorageContent() {
           <DialogHeader>
             <DialogTitle className="text-lg">Upload Object</DialogTitle>
             <DialogDescription className="text-xs">
-              Upload files with transparent Zstandard compression to the active
-              backend.
+              Upload files (up to 50 MB) with transparent Zstandard compression
+              to the active backend.
             </DialogDescription>
           </DialogHeader>
 
