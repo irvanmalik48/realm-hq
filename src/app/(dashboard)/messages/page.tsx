@@ -32,7 +32,6 @@ import {
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   TableRowSkeleton,
   TableSkeleton,
@@ -777,20 +776,18 @@ function MessagesContent() {
 
 export default function MessagesPage() {
   return (
-    <DashboardShell>
-      <React.Suspense
-        fallback={
-          <TableSkeleton
-            icon={Mail}
-            title="Contact Submissions"
-            description="Inquiries and messages submitted through the website contact form."
-            rowCount={8}
-            columnCount={5}
-          />
-        }
-      >
-        <MessagesContent />
-      </React.Suspense>
-    </DashboardShell>
+    <React.Suspense
+      fallback={
+        <TableSkeleton
+          icon={Mail}
+          title="Contact Submissions"
+          description="Inquiries and messages submitted through the website contact form."
+          rowCount={8}
+          columnCount={5}
+        />
+      }
+    >
+      <MessagesContent />
+    </React.Suspense>
   );
 }
