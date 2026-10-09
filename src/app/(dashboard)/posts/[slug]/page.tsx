@@ -15,7 +15,6 @@ import { useParams, useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -127,11 +126,9 @@ function PostEditSkeleton() {
 
 export default function EditPostPage() {
   return (
-    <DashboardShell>
-      <React.Suspense fallback={<PostEditSkeleton />}>
-        <EditPostContent />
-      </React.Suspense>
-    </DashboardShell>
+    <React.Suspense fallback={<PostEditSkeleton />}>
+      <EditPostContent />
+    </React.Suspense>
   );
 }
 
@@ -274,7 +271,10 @@ function EditPostContent() {
             the database.
           </EmptyDescription>
         </EmptyHeader>
-        <Button render={<Link href="/posts" />} className="mt-4">
+        <Button
+          render={<Link href="/posts" transitionTypes={["nav-back"]} />}
+          className="mt-4"
+        >
           <ArrowLeft data-icon="inline-start" />
           Back to Posts
         </Button>
@@ -298,7 +298,13 @@ function EditPostContent() {
           <Button
             variant="outline"
             size="sm"
-            render={<Link href="/posts" className="gap-1.5" />}
+            render={
+              <Link
+                href="/posts"
+                transitionTypes={["nav-back"]}
+                className="gap-1.5"
+              />
+            }
             className="flex-1 sm:flex-initial"
           >
             <ArrowLeft data-icon="inline-start" />
