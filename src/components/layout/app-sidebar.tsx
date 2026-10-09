@@ -21,7 +21,6 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { TwoFactorDialog } from "@/components/auth/two-factor-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -46,68 +45,101 @@ import {
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth/auth-context";
 
-const navItems = [
+interface NavItem {
+  title: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  superadminOnly?: boolean;
+  permission?: string;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
-    title: "Overview",
-    href: "/",
-    icon: LayoutDashboard,
+    label: "General",
+    items: [
+      {
+        title: "Overview",
+        href: "/",
+        icon: LayoutDashboard,
+      },
+    ],
   },
   {
-    title: "Posts",
-    href: "/posts",
-    icon: FileText,
+    label: "Content",
+    items: [
+      {
+        title: "Posts",
+        href: "/posts",
+        icon: FileText,
+      },
+      {
+        title: "Submissions",
+        href: "/messages",
+        icon: Mail,
+      },
+      {
+        title: "Comments",
+        href: "/comments",
+        icon: MessageSquare,
+      },
+      {
+        title: "Post Reactions",
+        href: "/reactions",
+        icon: Heart,
+      },
+    ],
   },
   {
-    title: "Submissions",
-    href: "/messages",
-    icon: Mail,
+    label: "Observability",
+    items: [
+      {
+        title: "Analytics",
+        href: "/analytics",
+        icon: BarChart3,
+      },
+      {
+        title: "Performance",
+        href: "/telemetry",
+        icon: Activity,
+      },
+      {
+        title: "System Logs",
+        href: "/logs",
+        icon: Terminal,
+      },
+    ],
   },
   {
-    title: "Comments",
-    href: "/comments",
-    icon: MessageSquare,
-  },
-  {
-    title: "Post Reactions",
-    href: "/reactions",
-    icon: Heart,
-  },
-  {
-    title: "Analytics",
-    href: "/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "File Storage",
-    href: "/storage",
-    icon: HardDrive,
-  },
-  {
-    title: "API Keys",
-    href: "/tokens",
-    icon: KeyRound,
-  },
-  {
-    title: "Administrators",
-    href: "/admins",
-    icon: ShieldCheck,
-    superadminOnly: true,
-  },
-  {
-    title: "Users",
-    href: "/users",
-    icon: Users,
-    permission: "users:read",
-  },
-  {
-    title: "Performance",
-    href: "/telemetry",
-    icon: Activity,
-  },
-  {
-    title: "System Logs",
-    href: "/logs",
-    icon: Terminal,
+    label: "Administration",
+    items: [
+      {
+        title: "Users",
+        href: "/users",
+        icon: Users,
+        permission: "users:read",
+      },
+      {
+        title: "Administrators",
+        href: "/admins",
+        icon: ShieldCheck,
+        superadminOnly: true,
+      },
+      {
+        title: "File Storage",
+        href: "/storage",
+        icon: HardDrive,
+      },
+      {
+        title: "API Keys",
+        href: "/tokens",
+        icon: KeyRound,
+      },
+    ],
   },
 ];
 
@@ -121,20 +153,6 @@ export function AppSidebar() {
       setOpenMobile(false);
     }
   }, [isMobile, setOpenMobile]);
-
-  const filteredItems = navItems.filter((item) => {
-    if (item.superadminOnly && !admin?.is_superadmin) {
-      return false;
-    }
-    if (
-      "permission" in item &&
-      item.permission &&
-      !hasPermission(item.permission)
-    ) {
-      return false;
-    }
-    return true;
-  });
 
   return (
     <Sidebar collapsible="icon" style={{ viewTransitionName: "site-sidebar" }}>
@@ -186,41 +204,60 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="no-scrollbar">
-        <SidebarGroup className="p-2 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:pt-3">
-          <SidebarGroupLabel className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/80 px-2 mb-1">
-            Management
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
-              {filteredItems.map((item) => {
-                const isActive =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href);
-                const Icon = item.icon;
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter((item) => {
+            if (item.superadminOnly && !admin?.is_superadmin) {
+              return false;
+            }
+            if (item.permission && !hasPermission(item.permission)) {
+              return false;
+            }
+            return true;
+          });
 
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      tooltip={item.title}
-                      onClick={handleNavClick}
-                      render={
-                        <Link
-                          href={item.href}
-                          transitionTypes={["nav-forward"]}
-                        />
-                      }
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          if (visibleItems.length === 0) return null;
+
+          return (
+            <SidebarGroup
+              key={group.label}
+              className="p-2 py-1.5 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:py-1"
+            >
+              <SidebarGroupLabel className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/80 px-2 mb-1">
+                {group.label}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
+                  {visibleItems.map((item) => {
+                    const isActive =
+                      item.href === "/"
+                        ? pathname === "/"
+                        : pathname.startsWith(item.href);
+                    const Icon = item.icon;
+
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          tooltip={item.title}
+                          onClick={handleNavClick}
+                          render={
+                            <Link
+                              href={item.href}
+                              transitionTypes={["nav-forward"]}
+                            />
+                          }
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 group-data-[collapsible=icon]:p-2 overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)]">
@@ -286,40 +323,6 @@ export function AppSidebar() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-1.5 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:items-center">
-            <TwoFactorDialog
-              trigger={
-                <div>
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <button
-                          type="button"
-                          aria-label="Two-Factor Authentication Security"
-                          className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors cursor-pointer relative"
-                        >
-                          <ShieldCheck
-                            className={`h-4 w-4 ${user?.two_factor_enabled ? "text-emerald-500" : ""}`}
-                          />
-                          {user?.two_factor_enabled && (
-                            <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          )}
-                        </button>
-                      }
-                    />
-                    <TooltipContent
-                      side="right"
-                      align="center"
-                      hidden={state !== "collapsed" || isMobile}
-                    >
-                      {user?.two_factor_enabled
-                        ? "2FA Active (Protected)"
-                        : "Configure 2FA"}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              }
-            />
-
             <Tooltip>
               <TooltipTrigger
                 render={
