@@ -46,6 +46,8 @@ export const viewport: Viewport = {
 
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import { CustomScrollbar } from "@/components/custom-scrollbar";
+import { LenisProvider } from "@/components/lenis-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth/auth-context";
@@ -91,8 +93,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            {children}
-            <Toaster richColors position="top-right" />
+            <LenisProvider>
+              <CustomScrollbar />
+              {children}
+              <Toaster richColors position="top-right" />
+            </LenisProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
