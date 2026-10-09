@@ -1,9 +1,18 @@
 "use client";
 
 import { Activity } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import * as React from "react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -60,9 +69,29 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "System Logs",
     subtitle: "Recent server events, warnings, and error logs",
   },
+  "/settings": {
+    title: "Settings",
+    subtitle: "Preferences, appearance, and web configuration",
+  },
 };
 
-export function AppHeader() {
+const segmentLabels: Record<string, string> = {
+  posts: "Posts",
+  new: "New Article",
+  analytics: "Analytics",
+  messages: "Submissions",
+  comments: "Comments",
+  reactions: "Post Reactions",
+  storage: "File Storage",
+  tokens: "API Keys",
+  admins: "Administrators",
+  users: "Users",
+  telemetry: "Performance",
+  logs: "System Logs",
+  settings: "Settings",
+};
+
+function HeaderBreadcrumbs() {
   const pathname = usePathname();
   const current =
     pageTitles[pathname] ||
@@ -70,28 +99,105 @@ export function AppHeader() {
       ? { title: "Edit Article", subtitle: "Update article content and status" }
       : { title: "Dashboard", subtitle: "Management Console" });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (typeof document !== "undefined") {
       document.title = `${current.title} | Realm HQ`;
     }
   }, [current.title]);
 
+  const segments = pathname.split("/").filter(Boolean);
+
+  if (segments.length === 0) {
+    return (
+      <Breadcrumb className="truncate">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage className="font-semibold text-foreground">
+              Command Centre
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  return (
+    <Breadcrumb className="truncate">
+      <BreadcrumbList>
+        <BreadcrumbItem className="hidden sm:inline-flex">
+          <BreadcrumbLink
+            render={
+              <Link href="/" transitionTypes={["nav-back"]}>
+                Command Centre
+              </Link>
+            }
+          />
+        </BreadcrumbItem>
+        <BreadcrumbSeparator className="hidden sm:inline-flex" />
+        {segments.map((segment, index) => {
+          const isLast = index === segments.length - 1;
+          const href = `/${segments.slice(0, index + 1).join("/")}`;
+          const label =
+            segmentLabels[segment] ||
+            (segment.length > 20 ? `${segment.slice(0, 18)}...` : segment);
+
+          if (isLast) {
+            return (
+              <BreadcrumbItem key={href}>
+                <BreadcrumbPage className="font-semibold text-foreground truncate max-w-48 sm:max-w-none">
+                  {label}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            );
+          }
+
+          return (
+            <span
+              key={href}
+              className="inline-flex items-center gap-1.5 sm:gap-2.5"
+            >
+              <BreadcrumbItem className="hidden sm:inline-flex">
+                <BreadcrumbLink
+                  render={
+                    <Link href={href} transitionTypes={["nav-back"]}>
+                      {label}
+                    </Link>
+                  }
+                />
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden sm:inline-flex" />
+            </span>
+          );
+        })}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
+export function AppHeader() {
   return (
     <header
       style={{ viewTransitionName: "site-header" }}
       className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-border bg-background/80 px-3 sm:px-4 md:px-6 backdrop-blur-md transition-colors"
     >
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="h-4" />
-        <div className="flex flex-col min-w-0">
-          <h1 className="text-sm font-semibold tracking-tight leading-none text-foreground truncate">
-            {current.title}
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block truncate">
-            {current.subtitle}
-          </p>
-        </div>
+        <React.Suspense
+          fallback={
+            <Breadcrumb className="truncate">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="font-semibold text-foreground">
+                    Command Centre
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          }
+        >
+          <HeaderBreadcrumbs />
+        </React.Suspense>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
