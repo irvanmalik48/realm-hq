@@ -50,6 +50,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -113,13 +121,33 @@ const SYNTAX_OPTIONS = [
   { value: "go", label: "Go" },
   { value: "python", label: "Python" },
   { value: "rust", label: "Rust" },
-  { value: "json", label: "JSON" },
-  { value: "yaml", label: "YAML" },
+  { value: "c", label: "C" },
+  { value: "cpp", label: "C++" },
+  { value: "csharp", label: "C#" },
+  { value: "java", label: "Java" },
+  { value: "kotlin", label: "Kotlin" },
+  { value: "swift", label: "Swift" },
+  { value: "php", label: "PHP" },
+  { value: "ruby", label: "Ruby" },
+  { value: "sql", label: "SQL" },
   { value: "html", label: "HTML" },
   { value: "css", label: "CSS" },
-  { value: "sql", label: "SQL" },
+  { value: "scss", label: "SCSS" },
+  { value: "json", label: "JSON" },
+  { value: "yaml", label: "YAML" },
+  { value: "toml", label: "TOML" },
+  { value: "xml", label: "XML" },
   { value: "shell", label: "Shell / Bash" },
   { value: "markdown", label: "Markdown" },
+  { value: "dockerfile", label: "Dockerfile" },
+  { value: "graphql", label: "GraphQL" },
+  { value: "lua", label: "Lua" },
+  { value: "zig", label: "Zig" },
+];
+
+const SYNTAX_FILTER_OPTIONS = [
+  { value: "all", label: "All Syntaxes" },
+  ...SYNTAX_OPTIONS,
 ];
 
 const TTL_OPTIONS = [
@@ -720,24 +748,36 @@ export default function PastesPage() {
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Select
+              <Combobox
+                items={SYNTAX_FILTER_OPTIONS}
                 value={syntaxFilter}
-                onValueChange={(val) => {
-                  if (val) setSyntaxFilter(val);
-                }}
+                onValueChange={(val) => setSyntaxFilter(val ?? "all")}
+                itemToStringLabel={(val) =>
+                  SYNTAX_FILTER_OPTIONS.find((opt) => opt.value === val)
+                    ?.label ?? String(val || "")
+                }
               >
-                <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
-                  <SelectValue placeholder="All Syntaxes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Syntaxes</SelectItem>
-                  {SYNTAX_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxInput
+                  placeholder="Filter syntax..."
+                  showTrigger
+                  showClear={syntaxFilter !== "all"}
+                  className="w-full sm:w-[180px] h-9 text-xs"
+                />
+                <ComboboxContent className="max-h-64 min-w-[180px]">
+                  <ComboboxEmpty>No syntax found</ComboboxEmpty>
+                  <ComboboxList>
+                    {(opt) => (
+                      <ComboboxItem
+                        key={opt.value}
+                        value={opt.value}
+                        className="text-xs"
+                      >
+                        {opt.label}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
           </div>
         </CardContent>
@@ -843,23 +883,36 @@ export default function PastesPage() {
 
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="paste-syntax">Syntax Highlighting</Label>
-                  <Select
+                  <Combobox
+                    items={SYNTAX_OPTIONS}
                     value={createSyntax}
-                    onValueChange={(val) => {
-                      if (val) setCreateSyntax(val);
-                    }}
+                    onValueChange={(val) => setCreateSyntax(val ?? "plaintext")}
+                    itemToStringLabel={(val) =>
+                      SYNTAX_OPTIONS.find((opt) => opt.value === val)?.label ??
+                      String(val || "")
+                    }
                   >
-                    <SelectTrigger id="paste-syntax">
-                      <SelectValue placeholder="Select syntax" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SYNTAX_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <ComboboxInput
+                      id="paste-syntax"
+                      placeholder="Select syntax..."
+                      showTrigger
+                      className="h-9 text-xs"
+                    />
+                    <ComboboxContent className="max-h-64 min-w-[200px]">
+                      <ComboboxEmpty>No syntax found</ComboboxEmpty>
+                      <ComboboxList>
+                        {(opt) => (
+                          <ComboboxItem
+                            key={opt.value}
+                            value={opt.value}
+                            className="text-xs"
+                          >
+                            {opt.label}
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
                 </div>
               </div>
 
