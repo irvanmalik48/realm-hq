@@ -9,6 +9,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   type PaginationState,
+  type RowSelectionState,
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
@@ -25,6 +26,7 @@ import {
   MoreHorizontal,
   Plus,
   RefreshCw,
+  RotateCcw,
   Search,
   Trash2,
   X,
@@ -32,10 +34,14 @@ import {
 import * as React from "react";
 import { toast } from "sonner";
 import {
+  DataTableBulkActions,
   DataTableColumnHeader,
   DataTablePagination,
 } from "@/components/data-table";
-import { TableRowSkeleton } from "@/components/layout/table-skeleton";
+import {
+  TableRowSkeleton,
+  TableSkeleton,
+} from "@/components/layout/table-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,7 +54,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Combobox,
   ComboboxContent,
@@ -191,7 +198,7 @@ function formatExpiration(expiresAt?: string): {
   return { text: `in ${Math.max(1, diffMins)}m`, isExpired: false };
 }
 
-export default function PastesPage() {
+function PastesContent() {
   const [pastes, setPastes] = React.useState<PasteSummary[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -206,8 +213,13 @@ export default function PastesPage() {
     pageSize: 10,
   });
 
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = React.useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [syntaxFilter, setSyntaxFilter] = React.useState<string>("all");
+  const [visibilityFilter, setVisibilityFilter] = React.useState<string>("all");
 
   // Create Dialog State
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
@@ -347,34 +359,82 @@ export default function PastesPage() {
     }
   };
 
-  // Filtered data based on search and syntax filter
+  const handleBulkDelete = async () => {
+    const selectedIndices = Object.keys(rowSelection).map(Number);
+    const selectedPastes = selectedIndices
+      .map((idx) => table.getRowModel().rows[idx]?.original)
+      .filter(Boolean);
+
+    if (selectedPastes.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      await Promise.all(selectedPastes.map((p) => deletePaste(p.slug)));
+      toast.success(`Deleted ${selectedPastes.length} paste(s)`);
+      setRowSelection({});
+      setIsBulkDeleteOpen(false);
+      await loadPastes(true);
+    } catch (err) {
+      console.error("Failed to delete pastes in bulk:", err);
+      toast.error("Failed to delete selected pastes");
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  // Filtered data based on search, syntax filter, and visibility filter
   const filteredData = React.useMemo(() => {
     return pastes.filter((p) => {
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        searchQuery.trim() === "" ||
-        p.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.title.toLowerCase().includes(searchQuery.toLowerCase());
+        !q ||
+        p.slug.toLowerCase().includes(q) ||
+        p.title.toLowerCase().includes(q);
 
       const matchesSyntax =
         syntaxFilter === "all" ||
         p.syntax.toLowerCase() === syntaxFilter.toLowerCase();
 
-      return matchesSearch && matchesSyntax;
+      const matchesVisibility =
+        visibilityFilter === "all" ||
+        (visibilityFilter === "public" ? p.is_public : !p.is_public);
+
+      return matchesSearch && matchesSyntax && matchesVisibility;
     });
-  }, [pastes, searchQuery, syntaxFilter]);
+  }, [pastes, searchQuery, syntaxFilter, visibilityFilter]);
 
   // Quick stats
-  const totalViews = React.useMemo(
-    () => pastes.reduce((acc, p) => acc + (p.views || 0), 0),
-    [pastes],
-  );
-  const publicCount = React.useMemo(
-    () => pastes.filter((p) => p.is_public).length,
-    [pastes],
-  );
+  const metrics = React.useMemo(() => {
+    const total = pastes.length;
+    const publicPastes = pastes.filter((p) => p.is_public).length;
+    const unlisted = total - publicPastes;
+    const views = pastes.reduce((acc, p) => acc + (p.views || 0), 0);
+    return { total, publicPastes, unlisted, views };
+  }, [pastes]);
 
   const columns: ColumnDef<PasteSummary>[] = React.useMemo(
     () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(val) => table.toggleAllPageRowsSelected(!!val)}
+            aria-label="Select all"
+            className="translate-y-[2px]"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(val) => row.toggleSelected(!!val)}
+            aria-label="Select row"
+            className="translate-y-[2px]"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
       {
         accessorKey: "slug",
         header: ({ column }) => (
@@ -620,7 +680,10 @@ export default function PastesPage() {
       sorting,
       columnFilters,
       pagination,
+      rowSelection,
     },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
@@ -630,229 +693,372 @@ export default function PastesPage() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  const selectedRowsCount = Object.keys(rowSelection).length;
+
   return (
-    <div className="flex flex-col gap-6 p-6">
-      {/* Top Header Card / Overview */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="flex flex-col gap-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <FileCode className="size-6 text-primary" />
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <FileCode className="h-5 w-5 text-primary" />
             Pastebin Service
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Dedicated pastebin service generating cryptographically unique
-            7-letter slugs for sharing code and snippets.
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Create, manage, and share code snippets with 7-letter unique slugs.
           </p>
         </div>
-
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="gap-2"
+            className="gap-1.5"
           >
             <RefreshCw
+              data-icon="inline-start"
               className={cn("size-3.5", isRefreshing && "animate-spin")}
             />
-            <span>Refresh</span>
+            Refresh
           </Button>
-
           <Button
             size="sm"
             onClick={() => setIsCreateOpen(true)}
-            className="gap-2 shadow-sm"
+            className="gap-1.5"
           >
-            <Plus className="size-4" />
-            <span>New Paste</span>
+            <Plus data-icon="inline-start" />
+            New Paste
           </Button>
         </div>
       </div>
 
-      {/* Metric Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="shadow-xs border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
-              Total Pastes
-            </CardTitle>
-            <FileCode className="size-4 text-primary opacity-80" />
+      {/* Metric Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Total Snippets
+            </span>
+            <FileCode className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {pastes.length.toLocaleString()}
+              {metrics.total}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Active snippet records
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="shadow-xs border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
-              Public Snippets
-            </CardTitle>
-            <Globe className="size-4 text-emerald-500 opacity-80" />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Public Pastes
+            </span>
+            <Globe className="size-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {publicCount.toLocaleString()}
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {metrics.publicPastes}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Visible without restriction
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="shadow-xs border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-xs font-medium text-muted-foreground">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Unlisted
+            </span>
+            <Lock className="size-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              {metrics.unlisted}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <span className="text-xs font-medium text-muted-foreground">
               Total Views
-            </CardTitle>
-            <Eye className="size-4 text-sky-500 opacity-80" />
+            </span>
+            <Eye className="size-4 text-sky-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {totalViews.toLocaleString()}
+              {metrics.views.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Read impressions across all pastes
-            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters and Search Bar */}
-      <Card className="shadow-xs border-border/60">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by title or 7-letter slug..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 text-sm h-9"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-3.5" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Combobox
-                items={SYNTAX_FILTER_OPTIONS}
-                value={syntaxFilter}
-                onValueChange={(val) => setSyntaxFilter(val ?? "all")}
-                itemToStringLabel={(val) =>
-                  SYNTAX_FILTER_OPTIONS.find((opt) => opt.value === val)
-                    ?.label ?? String(val || "")
-                }
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <div className="relative flex-1 sm:max-w-xs md:max-w-sm min-w-[200px]">
+            <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search by title or 7-letter slug..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/50"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
-                <ComboboxInput
-                  placeholder="Filter syntax..."
-                  showTrigger
-                  showClear={syntaxFilter !== "all"}
-                  className="w-full sm:w-[180px] h-9 text-xs"
-                />
-                <ComboboxContent className="max-h-64 min-w-[180px]">
-                  <ComboboxEmpty>No syntax found</ComboboxEmpty>
-                  <ComboboxList>
-                    {(opt) => (
-                      <ComboboxItem
-                        key={opt.value}
-                        value={opt.value}
-                        className="text-xs"
-                      >
-                        {opt.label}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            </div>
+                <X className="size-4" />
+              </button>
+            )}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Main Pastes Table */}
-      <Card className="shadow-xs border-border/60">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRowSkeleton columnCount={8} rowCount={6} />
-                ) : table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                      className="hover:bg-muted/40 transition-colors"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-48 text-center"
-                    >
-                      <Empty>
-                        <EmptyHeader>
-                          <FileCode className="size-10 text-muted-foreground/60 mb-2" />
-                          <EmptyTitle>No pastes found</EmptyTitle>
-                          <EmptyDescription>
-                            {searchQuery || syntaxFilter !== "all"
-                              ? "No snippets match the selected criteria."
-                              : "No pastes have been created yet. Click 'New Paste' to create one."}
-                          </EmptyDescription>
-                        </EmptyHeader>
-                      </Empty>
-                    </TableCell>
-                  </TableRow>
+          {/* Visibility Filter */}
+          <Select
+            value={visibilityFilter}
+            onValueChange={(val) => {
+              if (val) setVisibilityFilter(val);
+            }}
+          >
+            <SelectTrigger className="h-9 text-xs min-w-[130px] bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
+              <div className="flex items-center gap-1.5 truncate">
+                <Globe className="size-3.5 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground font-normal">
+                  Visibility:
+                </span>
+                <SelectValue>
+                  {(val) => {
+                    if (val === "public") {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 font-medium text-emerald-500">
+                          <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          Public
+                        </span>
+                      );
+                    }
+                    if (val === "unlisted") {
+                      return (
+                        <span className="inline-flex items-center gap-1.5 font-medium text-amber-500">
+                          <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+                          Unlisted
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="font-medium text-foreground">All</span>
+                    );
+                  }}
+                </SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent align="start" className="min-w-[150px]">
+              <SelectItem value="all" className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-muted-foreground/30" />
+                  All Visibility
+                </span>
+              </SelectItem>
+              <SelectItem value="public" className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  Public
+                </span>
+              </SelectItem>
+              <SelectItem value="unlisted" className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-amber-500" />
+                  Unlisted
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Syntax Filter Combobox */}
+          <Combobox
+            items={SYNTAX_FILTER_OPTIONS}
+            value={syntaxFilter}
+            onValueChange={(val) => setSyntaxFilter(val ?? "all")}
+            itemToStringLabel={(val) =>
+              SYNTAX_FILTER_OPTIONS.find((opt) => opt.value === val)?.label ??
+              String(val || "")
+            }
+          >
+            <ComboboxInput
+              placeholder="Filter syntax..."
+              showTrigger
+              showClear={syntaxFilter !== "all"}
+              className="h-9 text-xs min-w-[140px] max-w-[200px]"
+            />
+            <ComboboxContent className="max-h-64 min-w-[180px]">
+              <ComboboxEmpty>No syntax found</ComboboxEmpty>
+              <ComboboxList>
+                {(item) => (
+                  <ComboboxItem
+                    key={item.value}
+                    value={item.value}
+                    className="text-xs"
+                  >
+                    {item.label}
+                  </ComboboxItem>
                 )}
-              </TableBody>
-            </Table>
-          </div>
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
 
-          <div className="p-4 border-t border-border/50">
-            <DataTablePagination table={table} />
-          </div>
-        </CardContent>
-      </Card>
+          {(searchQuery ||
+            syntaxFilter !== "all" ||
+            visibilityFilter !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchQuery("");
+                setSyntaxFilter("all");
+                setVisibilityFilter("all");
+              }}
+              className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border/80 hover:border-border hover:bg-accent/40 gap-1.5 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="size-3.5" />
+              <span>Reset</span>
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground/80">
+                {(syntaxFilter !== "all" ? 1 : 0) +
+                  (visibilityFilter !== "all" ? 1 : 0) +
+                  (searchQuery ? 1 : 0)}
+              </span>
+            </Button>
+          )}
+        </div>
+
+        <div className="hidden lg:flex items-center text-xs text-muted-foreground shrink-0">
+          Showing{" "}
+          <span className="font-medium text-foreground mx-1">
+            {filteredData.length}
+          </span>{" "}
+          of {pastes.length} snippets
+        </div>
+      </div>
+
+      {/* Pastes Table */}
+      <div className="rounded-lg border border-border bg-card shadow-xs overflow-hidden">
+        <Table className="min-w-[850px]">
+          <TableHeader className="bg-muted/40">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRowSkeleton
+                columnCount={columns.length}
+                rowCount={pagination.pageSize || 8}
+              />
+            ) : table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className="hover:bg-muted/30 transition-colors"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-48 text-center"
+                >
+                  <Empty className="py-12 border-0">
+                    <EmptyHeader>
+                      <FileCode className="size-10 text-muted-foreground/60 mb-2" />
+                      <EmptyTitle>No pastes found</EmptyTitle>
+                      <EmptyDescription>
+                        {searchQuery ||
+                        syntaxFilter !== "all" ||
+                        visibilityFilter !== "all"
+                          ? "Try adjusting your search criteria or clear active filters."
+                          : "No pastes have been created yet. Click 'New Paste' to create one."}
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+
+        <DataTablePagination
+          table={table}
+          totalCount={filteredData.length}
+          pageSizeOptions={[10, 20, 50, 100]}
+        />
+      </div>
+
+      {/* Floating Bulk Actions Bar */}
+      <DataTableBulkActions
+        selectedCount={selectedRowsCount}
+        totalCount={filteredData.length}
+        onClearSelection={() => setRowSelection({})}
+      >
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => setIsBulkDeleteOpen(true)}
+          disabled={isBulkDeleting}
+          className="gap-1.5 h-8 text-xs cursor-pointer"
+        >
+          <Trash2 className="size-3.5" />
+          <span>Delete ({selectedRowsCount})</span>
+        </Button>
+      </DataTableBulkActions>
+
+      {/* Bulk Delete Alert Dialog */}
+      <AlertDialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Selected Pastes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedRowsCount} selected
+              paste(s)? This action cannot be undone and will permanently remove
+              these snippets.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+            >
+              {isBulkDeleting
+                ? "Deleting..."
+                : `Delete ${selectedRowsCount} Pastes`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Create New Paste Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -1160,5 +1366,23 @@ export default function PastesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function PastesPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <TableSkeleton
+          icon={FileCode}
+          title="Pastebin Service"
+          description="Create, manage, and share code snippets with 7-letter unique slugs."
+          rowCount={8}
+          columnCount={8}
+        />
+      }
+    >
+      <PastesContent />
+    </React.Suspense>
   );
 }
