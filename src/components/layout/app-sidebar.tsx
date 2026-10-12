@@ -273,8 +273,6 @@ function SidebarNavFallback({
   admin: ReturnType<typeof useAuth>["admin"];
   hasPermission: ReturnType<typeof useAuth>["hasPermission"];
 }) {
-  const pathname = usePathname();
-
   return (
     <>
       {navGroups.map((group) => {
@@ -312,10 +310,7 @@ function SidebarNavFallback({
                         render={
                           <Link
                             href={item.href}
-                            transitionTypes={getSidebarTransitionTypes(
-                              pathname,
-                              item.href,
-                            )}
+                            transitionTypes={["nav-forward"]}
                           />
                         }
                       >
