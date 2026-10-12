@@ -29,6 +29,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     title: "New Article",
     subtitle: "Compose and publish a new post",
   },
+  "/pastes": {
+    title: "Pastebin",
+    subtitle: "Manage and share code snippets",
+  },
   "/analytics": {
     title: "Analytics",
     subtitle: "Traffic, readership, and visitor metrics",
@@ -77,6 +81,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 
 const segmentLabels: Record<string, string> = {
   posts: "Posts",
+  pastes: "Pastebin",
   new: "New Article",
   analytics: "Analytics",
   messages: "Submissions",
@@ -97,7 +102,12 @@ function HeaderBreadcrumbs() {
     pageTitles[pathname] ||
     (pathname.startsWith("/posts/")
       ? { title: "Edit Article", subtitle: "Update article content and status" }
-      : { title: "Dashboard", subtitle: "Management Console" });
+      : pathname.startsWith("/pastes/")
+        ? {
+            title: "Paste Details",
+            subtitle: "Inspect paste content and metrics",
+          }
+        : { title: "Dashboard", subtitle: "Management Console" });
 
   React.useEffect(() => {
     if (typeof document !== "undefined") {
