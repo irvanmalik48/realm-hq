@@ -246,7 +246,7 @@ function EditPostContent() {
       setIsDeleting(true);
       await deletePost(post.slug);
       toast.success(`Deleted "${post.title}"`);
-      router.push("/posts");
+      router.push("/posts", { transitionTypes: ["nav-back"] });
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to delete article",
