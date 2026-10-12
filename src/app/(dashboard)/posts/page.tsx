@@ -491,6 +491,7 @@ function PostsContent() {
                     render={
                       <Link
                         href={`/posts/${post.slug}`}
+                        transitionTypes={["nav-forward"]}
                         className="flex items-center gap-2 cursor-pointer"
                       >
                         <PenSquare data-icon="inline-start" />
