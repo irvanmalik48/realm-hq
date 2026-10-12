@@ -499,17 +499,24 @@ export function MarkdownEditor({
       </div>
 
       {/* Editor Body */}
-      <div className="relative flex-1 bg-background" style={{ minHeight }}>
+      <div
+        className="relative flex-1 flex flex-col bg-background"
+        style={{ minHeight }}
+      >
         {mode === "visual" ? (
-          <div className="p-4 cursor-text">
-            <EditorContent editor={editor} />
+          <div className="flex-1 flex flex-col p-4 cursor-text">
+            <EditorContent
+              editor={editor}
+              className="flex-1 flex flex-col min-h-[inherit] [&_.tiptap]:flex-1 [&_.tiptap]:min-h-full"
+            />
           </div>
         ) : (
           <Textarea
             value={rawText}
             onChange={handleRawChange}
             placeholder={placeholder}
-            className="w-full h-full min-h-[400px] border-none rounded-none font-mono text-sm leading-relaxed p-4 focus-visible:ring-0 resize-y"
+            className="w-full flex-1 min-h-[inherit] border-none rounded-none font-mono text-sm leading-relaxed p-4 focus-visible:ring-0 resize-none bg-transparent dark:bg-transparent [field-sizing:fixed] overflow-y-auto"
+            style={{ minHeight: "inherit" }}
           />
         )}
       </div>
