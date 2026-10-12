@@ -100,7 +100,7 @@ function LoginForm() {
       });
 
       const destination = searchParams.get("from") || "/";
-      router.push(destination);
+      router.push(destination, { transitionTypes: ["nav-forward"] });
     } catch {
       toast.error("Error", {
         description:
@@ -146,7 +146,7 @@ function LoginForm() {
       });
 
       const destination = searchParams.get("from") || "/";
-      router.push(destination);
+      router.push(destination, { transitionTypes: ["nav-forward"] });
     } catch {
       toast.error("Error", {
         description: "Unexpected error during 2FA verification.",
@@ -395,7 +395,7 @@ function LoginForm() {
                     password: "password123",
                   });
                   if (res.success) {
-                    router.push("/");
+                    router.push("/", { transitionTypes: ["nav-forward"] });
                   }
                 } finally {
                   setSubmitting(false);
