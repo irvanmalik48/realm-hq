@@ -58,6 +58,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -160,6 +168,14 @@ function PostsContent() {
     }
     return Array.from(set).sort();
   }, [posts]);
+
+  const tagOptions = React.useMemo(
+    () => [
+      { value: "all", label: `All Tags (${allTags.length})` },
+      ...allTags.map((t) => ({ value: t, label: `#${t}` })),
+    ],
+    [allTags],
+  );
 
   // Filtered posts based on local search, status, and tag
   const filteredData = React.useMemo(() => {
@@ -736,38 +752,37 @@ function PostsContent() {
             </SelectContent>
           </Select>
 
-          {/* Tag Filter */}
-          <Select
+          {/* Tag Filter Combobox */}
+          <Combobox
+            items={tagOptions}
             value={tagFilter}
-            onValueChange={(val) => {
-              if (val) setTagFilter(val);
-            }}
+            onValueChange={(val) => setTagFilter(val ?? "all")}
+            itemToStringLabel={(val) =>
+              tagOptions.find((opt) => opt.value === val)?.label ??
+              String(val || "")
+            }
           >
-            <SelectTrigger className="h-9 text-xs min-w-[125px] bg-background/50 hover:bg-accent/40 border-dashed sm:border-solid transition-colors">
-              <div className="flex items-center gap-1.5 truncate">
-                <Tag className="size-3.5 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground font-normal">Tag:</span>
-                <SelectValue>
-                  {(val) => (
-                    <span className="font-medium text-foreground truncate max-w-[100px]">
-                      {val === "all" ? "All" : `#${val}`}
-                    </span>
-                  )}
-                </SelectValue>
-              </div>
-            </SelectTrigger>
-            <SelectContent align="start" className="min-w-[160px] max-h-64">
-              <SelectItem value="all" className="text-xs">
-                All Tags ({allTags.length})
-              </SelectItem>
-              {allTags.map((tag) => (
-                <SelectItem key={tag} value={tag} className="text-xs">
-                  <span className="text-muted-foreground mr-1">#</span>
-                  {tag}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <ComboboxInput
+              placeholder="Filter tag..."
+              showTrigger
+              showClear={tagFilter !== "all"}
+              className="h-9 text-xs min-w-[140px] max-w-[200px]"
+            />
+            <ComboboxContent className="max-h-64 min-w-[180px]">
+              <ComboboxEmpty>No tags found</ComboboxEmpty>
+              <ComboboxList>
+                {(item) => (
+                  <ComboboxItem
+                    key={item.value}
+                    value={item.value}
+                    className="text-xs"
+                  >
+                    {item.label}
+                  </ComboboxItem>
+                )}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
 
           {(searchQuery || statusFilter !== "all" || tagFilter !== "all") && (
             <Button
