@@ -4,6 +4,7 @@ import {
   Activity,
   BarChart3,
   Command,
+  FileCode,
   FileText,
   HardDrive,
   Heart,
@@ -77,6 +78,11 @@ const navGroups: NavGroup[] = [
         title: "Posts",
         href: "/posts",
         icon: FileText,
+      },
+      {
+        title: "Pastebin",
+        href: "/pastes",
+        icon: FileCode,
       },
       {
         title: "Submissions",
