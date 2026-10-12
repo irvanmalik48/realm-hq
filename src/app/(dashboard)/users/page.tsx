@@ -687,6 +687,7 @@ function UsersContent() {
                     onClick={() => {
                       router.push(
                         `/admins?prefill=${encodeURIComponent(u.email)}`,
+                        { transitionTypes: ["nav-forward"] },
                       );
                     }}
                     className="text-xs cursor-pointer gap-2"
