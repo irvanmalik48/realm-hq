@@ -58,6 +58,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -74,13 +82,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -446,6 +447,17 @@ function CommentsContent() {
       return timeB - timeA;
     });
   }, [data, postsMeta]);
+
+  const articleOptions = React.useMemo(
+    () =>
+      postGroups.map((g) => ({
+        value: g.slug,
+        label: `${g.title} (${g.totalComments})`,
+        title: g.title,
+        totalComments: g.totalComments,
+      })),
+    [postGroups],
+  );
 
   // Filtered post groups for the catalog
   const filteredPostGroups = React.useMemo(() => {
@@ -1126,41 +1138,42 @@ function CommentsContent() {
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Switch Post Dropdown */}
                     <div className="flex items-center gap-1.5">
-                      <Select
+                      <Combobox
+                        items={articleOptions}
                         value={selectedPostSlug}
-                        onValueChange={(slug) => setSelectedPostSlug(slug)}
+                        onValueChange={(slug) => {
+                          if (slug) setSelectedPostSlug(slug);
+                        }}
+                        itemToStringLabel={(slug) =>
+                          postGroups.find((g) => g.slug === slug)?.title ??
+                          String(slug || "")
+                        }
                       >
-                        <SelectTrigger className="h-8.5 w-[210px] text-xs">
-                          <SelectValue placeholder="Switch article">
-                            {(slug) => {
-                              const found = postGroups.find(
-                                (g) => g.slug === slug,
-                              );
-                              return (
+                        <ComboboxInput
+                          placeholder="Switch article..."
+                          showTrigger
+                          className="h-8.5 w-[210px] text-xs"
+                        />
+                        <ComboboxContent className="max-h-60 min-w-[240px]">
+                          <ComboboxEmpty>No articles found</ComboboxEmpty>
+                          <ComboboxList>
+                            {(item) => (
+                              <ComboboxItem
+                                key={item.value}
+                                value={item.value}
+                                className="text-xs"
+                              >
                                 <span className="font-medium truncate">
-                                  {found?.title || slug || "Switch article"}
+                                  {item.title}
                                 </span>
-                              );
-                            }}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60">
-                          {postGroups.map((g) => (
-                            <SelectItem
-                              key={g.slug}
-                              value={g.slug}
-                              className="text-xs"
-                            >
-                              <span className="font-medium truncate">
-                                {g.title}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground ml-1.5">
-                                ({g.totalComments})
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                                <span className="text-[10px] text-muted-foreground ml-1.5 shrink-0">
+                                  ({item.totalComments})
+                                </span>
+                              </ComboboxItem>
+                            )}
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
                     </div>
 
                     {/* Sort Order Toggle */}
@@ -1741,26 +1754,37 @@ function CommentsContent() {
           {!replyTarget && !selectedPostSlug && (
             <div className="space-y-1.5 py-1">
               <Label className="text-xs">Article</Label>
-              <Select
+              <Combobox
+                items={articleOptions}
                 value={newCommentSlug || postGroups[0]?.slug || ""}
                 onValueChange={(val) => setNewCommentSlug(val || "")}
+                itemToStringLabel={(slug) =>
+                  postGroups.find((g) => g.slug === slug)?.title ??
+                  String(slug || "")
+                }
               >
-                <SelectTrigger className="h-8.5 text-xs">
-                  <SelectValue placeholder="Select an article">
-                    {(slug) => {
-                      const found = postGroups.find((g) => g.slug === slug);
-                      return found?.title || slug || "Select an article";
-                    }}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {postGroups.map((g) => (
-                    <SelectItem key={g.slug} value={g.slug} className="text-xs">
-                      {g.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxInput
+                  placeholder="Select an article..."
+                  showTrigger
+                  className="h-8.5 text-xs w-full"
+                />
+                <ComboboxContent className="max-h-60 min-w-[280px]">
+                  <ComboboxEmpty>No articles found</ComboboxEmpty>
+                  <ComboboxList>
+                    {(item) => (
+                      <ComboboxItem
+                        key={item.value}
+                        value={item.value}
+                        className="text-xs"
+                      >
+                        <span className="font-medium truncate">
+                          {item.title}
+                        </span>
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
           )}
 
