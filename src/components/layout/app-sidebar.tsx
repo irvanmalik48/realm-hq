@@ -149,6 +149,41 @@ const navGroups: NavGroup[] = [
   },
 ];
 
+const navItemOrder = navGroups.flatMap((group) =>
+  group.items.map((i) => i.href),
+);
+
+function getSidebarTransitionTypes(
+  currentPathname: string,
+  targetHref: string,
+): string[] {
+  if (targetHref === currentPathname) {
+    return [];
+  }
+  if (targetHref === "/") {
+    return ["nav-back"];
+  }
+  if (currentPathname.startsWith(`${targetHref}/`)) {
+    return ["nav-back"];
+  }
+  if (targetHref.startsWith(`${currentPathname}/`)) {
+    return ["nav-forward"];
+  }
+
+  const currentIndex = navItemOrder.indexOf(
+    navItemOrder.find((h) =>
+      h === "/" ? currentPathname === "/" : currentPathname.startsWith(h),
+    ) || "",
+  );
+  const targetIndex = navItemOrder.indexOf(targetHref);
+
+  if (currentIndex !== -1 && targetIndex !== -1) {
+    return targetIndex < currentIndex ? ["nav-back"] : ["nav-forward"];
+  }
+
+  return ["nav-forward"];
+}
+
 function SidebarNavItems({
   handleNavClick,
   admin,
@@ -201,7 +236,10 @@ function SidebarNavItems({
                         render={
                           <Link
                             href={item.href}
-                            transitionTypes={["nav-forward"]}
+                            transitionTypes={getSidebarTransitionTypes(
+                              pathname,
+                              item.href,
+                            )}
                           />
                         }
                       >
@@ -229,6 +267,8 @@ function SidebarNavFallback({
   admin: ReturnType<typeof useAuth>["admin"];
   hasPermission: ReturnType<typeof useAuth>["hasPermission"];
 }) {
+  const pathname = usePathname();
+
   return (
     <>
       {navGroups.map((group) => {
@@ -266,7 +306,10 @@ function SidebarNavFallback({
                         render={
                           <Link
                             href={item.href}
-                            transitionTypes={["nav-forward"]}
+                            transitionTypes={getSidebarTransitionTypes(
+                              pathname,
+                              item.href,
+                            )}
                           />
                         }
                       >
