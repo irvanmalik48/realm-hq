@@ -200,9 +200,10 @@ export function CustomScrollbar() {
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleTrackClick}
     >
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: custom scrollbar thumb requires drag events */}
       <div
         ref={thumbRef}
+        role="presentation"
+        aria-hidden="true"
         className="w-full transition-opacity duration-200 cursor-grab active:cursor-grabbing bg-secondary absolute top-0 left-0 opacity-0 rounded-full"
         onMouseDown={handleMouseDown}
       />
