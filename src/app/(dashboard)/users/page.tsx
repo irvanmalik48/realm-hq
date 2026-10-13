@@ -773,11 +773,11 @@ function UsersContent() {
           <div>
             <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              Platform Users
+              Users
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Manage registered user accounts, social authentication links,
-              security posture, and administrative roles.
+              View and manage registered accounts, login methods, and
+              permissions.
             </p>
           </div>
           <div className="flex items-center gap-2">
