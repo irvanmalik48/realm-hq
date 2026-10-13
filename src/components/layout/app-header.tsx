@@ -18,64 +18,64 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": {
-    title: "Command Centre",
-    subtitle: "System health and overview",
+    title: "Dashboard Overview",
+    subtitle: "Everything at a glance",
   },
   "/posts": {
-    title: "Posts & Articles",
-    subtitle: "Manage and publish articles to Realm",
+    title: "Articles & Posts",
+    subtitle: "Write, edit, and publish articles",
   },
   "/posts/new": {
     title: "New Article",
-    subtitle: "Compose and publish a new post",
+    subtitle: "Write and publish a new post",
   },
   "/pastes": {
     title: "Pastebin",
-    subtitle: "Manage and share code snippets",
+    subtitle: "Create and share code snippets with secure links",
   },
   "/analytics": {
-    title: "Analytics",
-    subtitle: "Traffic, readership, and visitor metrics",
+    title: "Visitor Analytics",
+    subtitle: "Readership, traffic, and visitor trends",
   },
   "/messages": {
-    title: "Contact Submissions",
-    subtitle: "Messages received from site visitors",
+    title: "Contact Messages",
+    subtitle: "Messages and inquiries from website visitors",
   },
   "/comments": {
-    title: "Comments Moderation",
-    subtitle: "Manage and moderate community comments",
+    title: "Reader Comments",
+    subtitle: "Review discussions and reply to readers",
   },
   "/reactions": {
-    title: "Post Reactions",
-    subtitle: "Overview of likes and reactions across articles",
+    title: "Reactions",
+    subtitle: "See how readers respond to your articles",
   },
   "/storage": {
-    title: "File Storage",
-    subtitle: "Manage uploaded media, documents, and bucket assets",
+    title: "Files & Media",
+    subtitle: "Manage uploaded images, media, and documents",
   },
   "/tokens": {
     title: "API Keys",
-    subtitle: "Manage API keys and access tokens",
+    subtitle: "Create and manage keys for external apps",
   },
   "/admins": {
-    title: "Administrators",
-    subtitle: "Manage admin accounts, roles, and permissions",
+    title: "Team Administrators",
+    subtitle: "Manage administrator roles and team permissions",
   },
   "/users": {
-    title: "Platform Users",
-    subtitle: "Manage registered user accounts, roles, and status",
+    title: "Users",
+    subtitle: "View and manage user accounts and security settings",
   },
   "/telemetry": {
-    title: "System Performance",
-    subtitle: "Live database connections, server load, and memory usage",
+    title: "System Health",
+    subtitle: "Real-time health, processor load, and database activity",
   },
   "/logs": {
     title: "System Logs",
-    subtitle: "Recent server events, warnings, and error logs",
+    subtitle: "Recent server events, notices, and error history",
   },
   "/settings": {
     title: "Settings",
-    subtitle: "Preferences, appearance, and web configuration",
+    subtitle: "Customize appearance, scrolling, and profile preferences",
   },
 };
 
@@ -84,14 +84,14 @@ const segmentLabels: Record<string, string> = {
   pastes: "Pastebin",
   new: "New Article",
   analytics: "Analytics",
-  messages: "Submissions",
+  messages: "Messages",
   comments: "Comments",
-  reactions: "Post Reactions",
-  storage: "File Storage",
+  reactions: "Reactions",
+  storage: "Files & Media",
   tokens: "API Keys",
   admins: "Administrators",
   users: "Users",
-  telemetry: "Performance",
+  telemetry: "System Health",
   logs: "System Logs",
   settings: "Settings",
 };
@@ -123,7 +123,7 @@ function HeaderBreadcrumbs() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbPage className="font-semibold text-foreground">
-              Command Centre
+              Dashboard
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
@@ -138,7 +138,7 @@ function HeaderBreadcrumbs() {
           <BreadcrumbLink
             render={
               <Link href="/" transitionTypes={["nav-back"]}>
-                Command Centre
+                Dashboard
               </Link>
             }
           />
@@ -199,7 +199,7 @@ export function AppHeader() {
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbPage className="font-semibold text-foreground">
-                    Command Centre
+                    Dashboard
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
