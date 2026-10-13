@@ -139,7 +139,7 @@ function PostsContent() {
       const data = await fetchPosts({ limit: 200 });
       setPosts(data.posts);
       if (showToast) {
-        toast.success("Articles refreshed from database");
+        toast.success("Articles refreshed");
       }
     } catch (err) {
       console.error("Failed to load posts:", err);
@@ -577,8 +577,7 @@ function PostsContent() {
             Articles & Posts
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Create, manage, and publish articles dynamically stored in
-            PostgreSQL.
+            Write, edit, and publish articles for your blog.
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
