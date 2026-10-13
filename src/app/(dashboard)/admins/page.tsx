@@ -589,7 +589,7 @@ function AdminsContent() {
                       className="text-xs cursor-pointer gap-2 text-destructive focus:text-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Revoke Privileges
+                      Remove Admin Access
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -647,7 +647,7 @@ function AdminsContent() {
             Administrators
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Manage administrator accounts, assign roles, and control access
+            Manage your team, assign administrator roles, and customize
             permissions.
           </p>
         </div>
@@ -1077,7 +1077,7 @@ function AdminsContent() {
               Edit Admin Permissions
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Update granular capabilities for{" "}
+              Customize permissions for{" "}
               <span className="font-semibold text-foreground">
                 {editTarget?.user?.email}
               </span>
@@ -1220,7 +1220,7 @@ function AdminsContent() {
                 {removeTarget?.user?.full_name || removeTarget?.user?.username}{" "}
                 ({removeTarget?.user?.email})
               </span>
-              ? They will lose access to Command Centre modules immediately.
+              ? They will immediately lose access to Realm HQ.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1230,7 +1230,7 @@ function AdminsContent() {
               disabled={isRemoving}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              {isRemoving ? "Revoking..." : "Revoke Access"}
+              {isRemoving ? "Removing..." : "Remove Admin"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1245,7 +1245,7 @@ function AdminsContent() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Revoke {selectedCount} Selected Administrator(s)?
+              Remove {selectedCount} Selected Administrator(s)?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs">
               Are you sure you want to revoke administrator access for{" "}
