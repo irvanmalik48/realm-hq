@@ -20,14 +20,17 @@ import {
   Copy,
   ExternalLink,
   Eye,
+  EyeOff,
   FileCode,
   Globe,
+  KeyRound,
   Lock,
   MoreHorizontal,
   Plus,
   RefreshCw,
   RotateCcw,
   Search,
+  ShieldCheck,
   Trash2,
   X,
 } from "lucide-react";
@@ -228,12 +231,19 @@ function PastesContent() {
   const [createSyntax, setCreateSyntax] = React.useState("plaintext");
   const [createTTL, setCreateTTL] = React.useState("never");
   const [createIsPublic, setCreateIsPublic] = React.useState(true);
+  const [createHasPassword, setCreateHasPassword] = React.useState(false);
+  const [createPassword, setCreatePassword] = React.useState("");
+  const [showCreatePassword, setShowCreatePassword] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // View Sheet State
   const [viewPaste, setViewPaste] = React.useState<PasteDetail | null>(null);
   const [isViewLoading, setIsViewLoading] = React.useState(false);
   const [isViewOpen, setIsViewOpen] = React.useState(false);
+  const [unlockPassword, setUnlockPassword] = React.useState("");
+  const [showUnlockPassword, setShowUnlockPassword] = React.useState(false);
+  const [isUnlocking, setIsUnlocking] = React.useState(false);
+  const [unlockError, setUnlockError] = React.useState<string | null>(null);
 
   // Delete Dialog State
   const [pasteToDelete, setPasteToDelete] = React.useState<PasteSummary | null>(
@@ -288,6 +298,9 @@ function PastesContent() {
   const handleOpenDetail = React.useCallback(async (slug: string) => {
     setIsViewLoading(true);
     setIsViewOpen(true);
+    setUnlockPassword("");
+    setShowUnlockPassword(false);
+    setUnlockError(null);
     try {
       const detail = await fetchPasteBySlug(slug);
       setViewPaste(detail);
@@ -300,10 +313,39 @@ function PastesContent() {
     }
   }, []);
 
+  const handleUnlockPaste = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!viewPaste || !unlockPassword.trim()) {
+      toast.error("Please enter the decryption password");
+      return;
+    }
+    setIsUnlocking(true);
+    setUnlockError(null);
+    try {
+      const unlocked = await fetchPasteBySlug(
+        viewPaste.slug,
+        unlockPassword.trim(),
+      );
+      setViewPaste(unlocked);
+      toast.success("Snippet unlocked successfully!");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Invalid password";
+      setUnlockError(msg);
+      toast.error(msg);
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!createContent.trim()) {
       toast.error("Paste content cannot be empty");
+      return;
+    }
+
+    if (createHasPassword && !createPassword.trim()) {
+      toast.error("Please enter a password for encryption");
       return;
     }
 
@@ -313,16 +355,22 @@ function PastesContent() {
         title: createTitle.trim() || undefined,
         content: createContent,
         syntax: createSyntax,
+        password: createHasPassword ? createPassword.trim() : undefined,
         ttl: createTTL,
         is_public: createIsPublic,
       });
 
       toast.success(
-        `Paste created successfully with 7-letter slug: ${created.slug}`,
+        createHasPassword
+          ? `Paste created & encrypted with 7-letter slug: ${created.slug}`
+          : `Paste created successfully with 7-letter slug: ${created.slug}`,
       );
       setIsCreateOpen(false);
       setCreateTitle("");
       setCreateContent("");
+      setCreatePassword("");
+      setCreateHasPassword(false);
+      setShowCreatePassword(false);
       setCreateSyntax("plaintext");
       setCreateTTL("never");
       setCreateIsPublic(true);
@@ -479,14 +527,27 @@ function PastesContent() {
         ),
         cell: ({ row }) => {
           const title = row.getValue("title") as string;
+          const isEncrypted = row.original.is_encrypted;
           return (
-            <div className="max-w-[200px] truncate">
+            <div className="flex items-center gap-1.5 max-w-[220px] truncate">
               {title ? (
-                <span className="font-medium text-foreground">{title}</span>
+                <span className="font-medium text-foreground truncate">
+                  {title}
+                </span>
               ) : (
-                <span className="italic text-muted-foreground text-xs">
+                <span className="italic text-muted-foreground text-xs truncate">
                   Untitled
                 </span>
+              )}
+              {isEncrypted && (
+                <Badge
+                  variant="outline"
+                  className="font-medium text-[10px] px-1.5 py-0 h-4 border-amber-500/30 text-amber-500 bg-amber-500/10 gap-1 shrink-0"
+                  title="Password protected snippet"
+                >
+                  <Lock className="size-2.5" />
+                  <span>Protected</span>
+                </Badge>
               )}
             </div>
           );
@@ -705,7 +766,7 @@ function PastesContent() {
             Pastebin Service
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Create, manage, and share code snippets with 7-letter unique slugs.
+            Create, manage, and share code snippets with short, shareable links.
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -798,7 +859,7 @@ function PastesContent() {
           <div className="relative flex-1 sm:max-w-xs md:max-w-sm min-w-[200px]">
             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Search by title or 7-letter slug..."
+              placeholder="Search by title or link code..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/50"
@@ -1168,6 +1229,69 @@ function PastesContent() {
                 </div>
               </div>
 
+              {/* Password Protection */}
+              <div className="flex flex-col gap-2 rounded-lg border border-border/70 p-3 bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lock className="size-4 text-amber-500" />
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor="paste-password-toggle"
+                        className="text-xs font-semibold cursor-pointer"
+                      >
+                        Protect with Password
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground">
+                        Require a password to view or copy this snippet
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="paste-password-toggle"
+                    checked={createHasPassword}
+                    onCheckedChange={(checked) => {
+                      setCreateHasPassword(checked);
+                      if (!checked) setCreatePassword("");
+                    }}
+                  />
+                </div>
+                {createHasPassword && (
+                  <div className="mt-2 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="relative">
+                      <Input
+                        type={showCreatePassword ? "text" : "password"}
+                        placeholder="Enter a password..."
+                        value={createPassword}
+                        onChange={(e) => setCreatePassword(e.target.value)}
+                        className="pr-10 text-xs font-mono h-9"
+                        required={createHasPassword}
+                      />
+                      <button
+                        type="button"
+                        aria-label={
+                          showCreatePassword ? "Hide password" : "Show password"
+                        }
+                        onClick={() =>
+                          setShowCreatePassword(!showCreatePassword)
+                        }
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                      >
+                        {showCreatePassword ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Only users with this password can decrypt and read the
+                      paste content. The server stores only authenticated
+                      ciphertext.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="paste-content">
@@ -1245,8 +1369,19 @@ function PastesContent() {
               </div>
 
               {viewPaste && (
-                <div className="flex items-center gap-1.5 font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
-                  <span>{viewPaste.slug}</span>
+                <div className="flex items-center gap-2">
+                  {viewPaste.is_encrypted && (
+                    <Badge
+                      variant="outline"
+                      className="gap-1 font-mono text-[10px] text-amber-500 border-amber-500/30 bg-amber-500/10"
+                    >
+                      <Lock className="size-2.5" />
+                      <span>Encrypted</span>
+                    </Badge>
+                  )}
+                  <div className="flex items-center gap-1.5 font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20">
+                    <span>{viewPaste.slug}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -1278,58 +1413,164 @@ function PastesContent() {
               <RefreshCw className="size-6 animate-spin text-primary opacity-60" />
             </div>
           ) : viewPaste ? (
-            <div className="flex-1 flex flex-col gap-4 overflow-hidden py-4">
-              {/* Action Toolbar */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+            viewPaste.is_encrypted && !viewPaste.content ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                <div className="size-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-500 shadow-lg shadow-amber-500/5">
+                  <Lock className="size-7" />
+                </div>
+                <h3 className="text-base font-semibold text-foreground mb-1.5">
+                  Password-Protected Snippet
+                </h3>
+                <p className="text-xs text-muted-foreground max-w-sm mb-6 leading-relaxed">
+                  This snippet is protected with a password. Enter the password
+                  below to view and copy its content.
+                </p>
+                <form
+                  onSubmit={handleUnlockPaste}
+                  className="w-full max-w-sm space-y-3"
+                >
+                  <div className="space-y-1 text-left">
+                    <Label
+                      htmlFor="unlock-password"
+                      className="text-xs font-medium"
+                    >
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="unlock-password"
+                        type={showUnlockPassword ? "text" : "password"}
+                        placeholder="Enter the snippet password..."
+                        value={unlockPassword}
+                        onChange={(e) => {
+                          setUnlockPassword(e.target.value);
+                          if (unlockError) setUnlockError(null);
+                        }}
+                        className={cn(
+                          "pr-10 text-xs font-mono h-9",
+                          unlockError &&
+                            "border-destructive focus-visible:ring-destructive",
+                        )}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        aria-label={
+                          showUnlockPassword ? "Hide password" : "Show password"
+                        }
+                        onClick={() =>
+                          setShowUnlockPassword(!showUnlockPassword)
+                        }
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                      >
+                        {showUnlockPassword ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
+                      </button>
+                    </div>
+                    {unlockError && (
+                      <p className="text-[11px] text-destructive font-medium mt-1">
+                        {unlockError}
+                      </p>
+                    )}
+                  </div>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handleCopy(viewPaste.content, "paste content")
-                    }
-                    className="gap-1.5 h-8 text-xs"
+                    type="submit"
+                    className="w-full gap-2 h-9 text-xs"
+                    disabled={isUnlocking || !unlockPassword.trim()}
                   >
-                    <Copy className="size-3.5" />
-                    <span>Copy Content</span>
+                    {isUnlocking ? (
+                      <>
+                        <RefreshCw className="size-3.5 animate-spin" />
+                        <span>Unlocking...</span>
+                      </>
+                    ) : (
+                      <>
+                        <KeyRound className="size-3.5" />
+                        <span>Unlock Snippet</span>
+                      </>
+                    )}
                   </Button>
+                </form>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col gap-4 overflow-hidden py-4">
+                {/* Action Toolbar */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleCopy(viewPaste.content, "paste content")
+                      }
+                      className="gap-1.5 h-8 text-xs"
+                    >
+                      <Copy className="size-3.5" />
+                      <span>Copy Content</span>
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handleCopy(
-                        `${window.location.origin}/api/pastes/${viewPaste.slug}/raw`,
-                        "raw link",
-                      )
-                    }
-                    className="gap-1.5 h-8 text-xs"
-                  >
-                    <Code2 className="size-3.5" />
-                    <span>Copy Raw Link</span>
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        handleCopy(
+                          `${window.location.origin}/api/pastes/${viewPaste.slug}/raw${
+                            unlockPassword
+                              ? `?password=${encodeURIComponent(unlockPassword)}`
+                              : ""
+                          }`,
+                          "raw link",
+                        )
+                      }
+                      className="gap-1.5 h-8 text-xs"
+                    >
+                      <Code2 className="size-3.5" />
+                      <span>Copy Raw Link</span>
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {viewPaste.is_encrypted && (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 text-[11px] border-emerald-500/30 text-emerald-500 bg-emerald-500/10 font-mono"
+                      >
+                        <ShieldCheck className="size-3" />
+                        <span>Decrypted</span>
+                      </Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        window.open(
+                          `/api/pastes/${viewPaste.slug}/raw${
+                            unlockPassword
+                              ? `?password=${encodeURIComponent(unlockPassword)}`
+                              : ""
+                          }`,
+                          "_blank",
+                        )
+                      }
+                      className="gap-1.5 h-8 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <ExternalLink className="size-3.5" />
+                      <span>Raw View</span>
+                    </Button>
+                  </div>
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    window.open(`/api/pastes/${viewPaste.slug}/raw`, "_blank")
-                  }
-                  className="gap-1.5 h-8 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  <ExternalLink className="size-3.5" />
-                  <span>Raw View</span>
-                </Button>
+                {/* Code display with line numbers */}
+                <div className="flex-1 overflow-auto rounded-lg border border-border/60 bg-muted/30 p-4 font-mono text-xs leading-relaxed">
+                  <pre className="text-foreground whitespace-pre-wrap break-all select-text">
+                    {viewPaste.content}
+                  </pre>
+                </div>
               </div>
-
-              {/* Code display with line numbers */}
-              <div className="flex-1 overflow-auto rounded-lg border border-border/60 bg-muted/30 p-4 font-mono text-xs leading-relaxed">
-                <pre className="text-foreground whitespace-pre-wrap break-all select-text">
-                  {viewPaste.content}
-                </pre>
-              </div>
-            </div>
+            )
           ) : null}
         </SheetContent>
       </Sheet>
