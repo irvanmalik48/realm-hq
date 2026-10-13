@@ -1166,15 +1166,15 @@ function StorageContent() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md border border-border/40">
               <ShieldCheck className="h-3.5 w-3.5 text-sky-400" />
-              <span>Protected Storage</span>
+              <span>Secure Storage</span>
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md border border-border/40">
               <Zap className="h-3.5 w-3.5 text-amber-400" />
-              <span>Optimized Compression</span>
+              <span>Automatic Compression</span>
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md border border-border/40">
               <Lock className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Secure Signed Links</span>
+              <span>Protected Download Links</span>
             </div>
           </div>
         </div>
@@ -1281,10 +1281,10 @@ function StorageContent() {
             </div>
             <div className="text-center">
               <h3 className="text-sm font-semibold text-foreground">
-                Drop File to Ingest
+                Drop files to upload
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Will be transparently compressed via Zstandard and sandboxed
+                Files are automatically optimized and securely saved
               </p>
             </div>
           </div>
@@ -1305,14 +1305,14 @@ function StorageContent() {
               }}
               className="hover:text-foreground transition-colors cursor-pointer font-medium"
             >
-              storage
+              files
             </button>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
             <span className="text-foreground font-semibold">
               {categoryFilter === "all"
                 ? backendFilter === "all"
-                  ? "all-objects"
-                  : `${backendFilter}-backend`
+                  ? "all-files"
+                  : `${backendFilter}-storage`
                 : categoryFilter}
             </span>
             <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border border-border/50 ml-1">
