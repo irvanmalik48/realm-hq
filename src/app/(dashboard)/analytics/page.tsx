@@ -166,11 +166,11 @@ export default function AnalyticsPage() {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
-            Web Analytics
+            Visitor Analytics
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Live traffic, visitor telemetry, and engagement metrics for realm.
-            across all pages and articles.
+            Live traffic, visitor activity, and readership trends across your
+            website.
           </p>
         </div>
 
