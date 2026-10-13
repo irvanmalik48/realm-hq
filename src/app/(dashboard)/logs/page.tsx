@@ -488,7 +488,7 @@ function LogsContent() {
             System Logs
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Real-time activity logs, diagnostic events, and system errors.
+            Real-time activity logs, notices, and error history.
           </p>
         </div>
 
@@ -538,7 +538,7 @@ function LogsContent() {
             className="gap-1.5 text-xs cursor-pointer"
           >
             <Trash2 className="h-4 w-4" />
-            Purge Logs
+            Clear Logs
           </Button>
         </div>
       </div>
@@ -897,19 +897,17 @@ function LogsContent() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Purge System Logs
+              Clear System Logs
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs">
-              Select a retention policy to delete logs from PostgreSQL table{" "}
-              <span className="font-mono text-foreground">system_logs</span>.
+              Choose which logs to remove. This helps keep your log history
+              tidy.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">
-                Retention Strategy
-              </Label>
+              <Label className="text-xs font-semibold">Time Period</Label>
               <Select
                 value={clearMode}
                 onValueChange={(val) => {
@@ -927,7 +925,7 @@ function LogsContent() {
                     Delete logs older than 30 days
                   </SelectItem>
                   <SelectItem value="all" className="text-xs">
-                    Truncate entire log table (Clear All)
+                    Clear all logs
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -941,7 +939,7 @@ function LogsContent() {
               disabled={isClearing}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              {isClearing ? "Purging..." : "Confirm Purge"}
+              {isClearing ? "Clearing..." : "Clear Logs"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
