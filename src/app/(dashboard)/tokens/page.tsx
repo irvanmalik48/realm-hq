@@ -558,8 +558,7 @@ function TokensContent() {
             API Keys
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Create and manage API keys to authenticate external apps and
-            services.
+            Create and manage API keys to connect external tools and services.
           </p>
         </div>
 
@@ -608,7 +607,7 @@ function TokensContent() {
             className="gap-1.5 text-xs cursor-pointer"
           >
             <Plus className="h-4 w-4" />
-            Generate Token
+            Create API Key
           </Button>
         </div>
       </div>
@@ -619,11 +618,11 @@ function TokensContent() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-500">
               <Key className="h-4 w-4" />
-              Copy Your Secret API Token
+              Save Your API Key
             </CardTitle>
             <CardDescription className="text-xs">
-              This secret will never be shown again. Save it in your environment
-              configuration now.
+              This key will only be shown once. Please copy and store it
+              somewhere safe.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -646,7 +645,7 @@ function TokensContent() {
                 ) : (
                   <>
                     <Copy className="h-4 w-4" />
-                    Copy Token
+                    Copy Key
                   </>
                 )}
               </Button>
@@ -852,22 +851,23 @@ function TokensContent() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg">Generate API Token</DialogTitle>
+            <DialogTitle className="text-lg">Create API Key</DialogTitle>
             <DialogDescription className="text-xs">
-              Issue a signed, scoped API token for automated integrations.
+              Generate a secure key to let external apps interact with your
+              site.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreate} className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="token-name" className="text-xs font-semibold">
-                Token Name / Client Label
+                Key Name
               </Label>
               <div className="relative">
                 <KeyRound className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="token-name"
-                  placeholder="e.g. CI/CD Ingest Pipeline"
+                  placeholder="e.g. My Website, Build Script, Mobile App"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="pl-8 text-xs h-9"
@@ -878,7 +878,7 @@ function TokensContent() {
 
             <div className="space-y-1.5">
               <Label htmlFor="scopes" className="text-xs font-semibold">
-                Granted Scopes
+                Permissions
               </Label>
               <Select
                 value={scopeOption}
@@ -887,23 +887,23 @@ function TokensContent() {
                 }}
               >
                 <SelectTrigger className="text-xs h-9">
-                  <SelectValue placeholder="Select scopes" />
+                  <SelectValue placeholder="Select permissions" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="*" className="text-xs">
-                    Wildcard Full Access (*)
+                    Full Access (All Permissions)
                   </SelectItem>
                   <SelectItem
                     value="storage:read,storage:write"
                     className="text-xs"
                   >
-                    Storage Read &amp; Write
+                    Files: Read &amp; Write
                   </SelectItem>
                   <SelectItem value="comments:moderate" className="text-xs">
-                    Comments Moderation
+                    Comments: Moderation
                   </SelectItem>
                   <SelectItem value="metrics:read" className="text-xs">
-                    Metrics &amp; Telemetry Read
+                    Analytics &amp; Health: Read-only
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -912,7 +912,7 @@ function TokensContent() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="rate-limit" className="text-xs font-semibold">
-                  Rate Limit (RPM)
+                  Speed Limit (Req / min)
                 </Label>
                 <div className="relative">
                   <Gauge className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -930,7 +930,7 @@ function TokensContent() {
 
               <div className="space-y-1.5">
                 <Label htmlFor="expiry" className="text-xs font-semibold">
-                  TTL Expiration
+                  Expires In
                 </Label>
                 <div className="relative">
                   <Clock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -977,7 +977,7 @@ function TokensContent() {
                 size="sm"
                 disabled={isCreating || !name.trim()}
               >
-                {isCreating ? "Generating..." : "Generate Token"}
+                {isCreating ? "Creating..." : "Create Key"}
               </Button>
             </DialogFooter>
           </form>
