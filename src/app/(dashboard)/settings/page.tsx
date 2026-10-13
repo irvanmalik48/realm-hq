@@ -16,11 +16,10 @@ export default function SettingsPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Settings className="h-6 w-6 text-primary" />
-            Web Settings
+            Settings
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Customize appearance, smooth scrolling physics, and administrator
-            preferences.
+            Customize appearance, scrolling behavior, and profile preferences.
           </p>
         </div>
 
