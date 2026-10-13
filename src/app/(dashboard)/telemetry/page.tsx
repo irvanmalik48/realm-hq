@@ -251,11 +251,11 @@ export default function TelemetryPage() {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
-            System Telemetry &amp; Performance
+            System Health &amp; Performance
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Real-time CPU load, frequency scaling, runtime memory, and
-            connection metrics.
+            Real-time health, processor load, memory usage, and database
+            connections.
           </p>
         </div>
 
@@ -292,7 +292,7 @@ export default function TelemetryPage() {
                 htmlFor="live-stream"
                 className="text-xs text-muted-foreground cursor-pointer select-none"
               >
-                Stream
+                Live updates
               </Label>
             </div>
           </div>
@@ -372,11 +372,11 @@ export default function TelemetryPage() {
                     variant="outline"
                     className="text-muted-foreground border-border text-[10px]"
                   >
-                    Awaiting API
+                    Waiting for data
                   </Badge>
                 </div>
                 <span className="text-[10px] text-muted-foreground block truncate">
-                  Restart API service to track
+                  Starts automatically once data is reported
                 </span>
               </div>
             )}
@@ -438,7 +438,7 @@ export default function TelemetryPage() {
                   N/A
                 </div>
                 <span className="text-[10px] text-muted-foreground block truncate">
-                  Restart API service to track
+                  Starts automatically once data is reported
                 </span>
               </div>
             )}
