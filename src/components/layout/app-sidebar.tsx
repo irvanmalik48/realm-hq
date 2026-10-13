@@ -85,7 +85,7 @@ const navGroups: NavGroup[] = [
         icon: FileCode,
       },
       {
-        title: "Submissions",
+        title: "Messages",
         href: "/messages",
         icon: Mail,
       },
@@ -95,14 +95,14 @@ const navGroups: NavGroup[] = [
         icon: MessageSquare,
       },
       {
-        title: "Post Reactions",
+        title: "Reactions",
         href: "/reactions",
         icon: Heart,
       },
     ],
   },
   {
-    label: "Observability",
+    label: "Health & Activity",
     items: [
       {
         title: "Analytics",
@@ -110,7 +110,7 @@ const navGroups: NavGroup[] = [
         icon: BarChart3,
       },
       {
-        title: "Performance",
+        title: "System Health",
         href: "/telemetry",
         icon: Activity,
       },
@@ -137,7 +137,7 @@ const navGroups: NavGroup[] = [
         superadminOnly: true,
       },
       {
-        title: "File Storage",
+        title: "Files & Media",
         href: "/storage",
         icon: HardDrive,
       },
@@ -371,7 +371,7 @@ export function AppSidebar() {
                 Realm HQ
               </span>
               <span className="text-xs text-muted-foreground truncate whitespace-nowrap">
-                Command Centre
+                Dashboard
               </span>
             </div>
           </div>
