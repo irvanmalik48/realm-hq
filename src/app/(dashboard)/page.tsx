@@ -198,10 +198,11 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <LayoutDashboard className="h-5 w-5 text-primary" />
-            Command Centre
+            Dashboard Overview
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Live system status, storage overview, and recent activity.
+            Welcome back. Here is your latest traffic, storage, and system
+            activity.
           </p>
         </div>
 
@@ -241,11 +242,11 @@ export default function DashboardPage() {
             <div className="flex items-center gap-1.5 mt-2">
               <Badge
                 variant="outline"
-                className="text-[10px] uppercase font-mono px-1.5 py-0"
+                className="text-[10px] font-medium px-1.5 py-0"
               >
                 {storageStats?.active_backend === "s3"
-                  ? "Cloud S3"
-                  : "Local Disk"}
+                  ? "Cloud Storage"
+                  : "Local Storage"}
               </Badge>
               {storageStats?.average_savings_percent ? (
                 <span className="text-[11px] text-emerald-500 font-medium flex items-center">
@@ -264,7 +265,7 @@ export default function DashboardPage() {
               transitionTypes={["nav-forward"]}
               className="hover:text-foreground inline-flex items-center gap-0.5"
             >
-              Explorer <ArrowUpRight className="h-3 w-3" />
+              View files <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
         </Card>
@@ -273,7 +274,7 @@ export default function DashboardPage() {
         <Card className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
-              Database Connections
+              Database Health
             </span>
             <Database className="h-4 w-4 text-emerald-500" />
           </div>
@@ -283,7 +284,7 @@ export default function DashboardPage() {
                 {telemetry?.db_pool?.acquired_conns ?? 0}
               </span>
               <span className="text-xs text-muted-foreground">
-                / {telemetry?.db_pool?.max_conns ?? 10} active
+                of {telemetry?.db_pool?.max_conns ?? 10} in use
               </span>
             </div>
             <div className="flex items-center gap-1.5 mt-2">
@@ -296,7 +297,7 @@ export default function DashboardPage() {
                   : telemetry?.database || "Unknown"}
               </Badge>
               <span className="text-[11px] text-muted-foreground">
-                {telemetry?.db_pool?.idle_conns ?? 0} idle
+                {telemetry?.db_pool?.idle_conns ?? 0} available
               </span>
             </div>
           </div>
@@ -307,7 +308,7 @@ export default function DashboardPage() {
               transitionTypes={["nav-forward"]}
               className="hover:text-foreground inline-flex items-center gap-0.5"
             >
-              Performance <ArrowUpRight className="h-3 w-3" />
+              View health <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
         </Card>
@@ -328,11 +329,8 @@ export default function DashboardPage() {
               <span className="text-xs text-muted-foreground">in use</span>
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <Badge
-                variant="outline"
-                className="text-[10px] px-1.5 py-0 font-mono"
-              >
-                {telemetry?.runtime?.goroutines ?? 0} Workers
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                {telemetry?.runtime?.goroutines ?? 0} Active tasks
               </Badge>
               <span className="text-[11px] text-muted-foreground">
                 {telemetry?.runtime?.gc_cycles ?? 0} Cleanups
@@ -341,14 +339,14 @@ export default function DashboardPage() {
           </div>
           <div className="mt-3 pt-3 border-t border-border flex justify-between text-[11px] text-muted-foreground">
             <span>
-              Reserved: {formatBytes(telemetry?.runtime?.sys_bytes || 0)}
+              Allocated: {formatBytes(telemetry?.runtime?.sys_bytes || 0)}
             </span>
             <Link
               href="/telemetry"
               transitionTypes={["nav-forward"]}
               className="hover:text-foreground inline-flex items-center gap-0.5"
             >
-              Details <ArrowUpRight className="h-3 w-3" />
+              View details <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
         </Card>
@@ -357,7 +355,7 @@ export default function DashboardPage() {
         <Card className="p-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
-              Inbox &amp; Community
+              Messages &amp; Community
             </span>
             <Mail className="h-4 w-4 text-violet-500" />
           </div>
@@ -369,10 +367,7 @@ export default function DashboardPage() {
               <span className="text-xs text-muted-foreground">messages</span>
             </div>
             <div className="flex items-center gap-1.5 mt-2">
-              <Badge
-                variant="outline"
-                className="text-[10px] px-1.5 py-0 font-mono"
-              >
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                 {commentsCount} Comments
               </Badge>
             </div>
@@ -383,14 +378,14 @@ export default function DashboardPage() {
               transitionTypes={["nav-forward"]}
               className="hover:text-foreground inline-flex items-center gap-0.5"
             >
-              Inquiries <ArrowUpRight className="h-3 w-3" />
+              View messages <ArrowUpRight className="h-3 w-3" />
             </Link>
             <Link
               href="/comments"
               transitionTypes={["nav-forward"]}
               className="hover:text-foreground inline-flex items-center gap-0.5"
             >
-              Moderation <ArrowUpRight className="h-3 w-3" />
+              View comments <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
         </Card>
@@ -405,15 +400,15 @@ export default function DashboardPage() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <CardTitle className="text-sm font-semibold">
-                    Visitor Traffic (24h)
+                    Website Visitors (Last 24 Hours)
                   </CardTitle>
-                  <Badge variant="outline" className="text-[10px] font-mono">
+                  <Badge variant="outline" className="text-[10px]">
                     {analyticsStats?.total_views ?? 0} views •{" "}
                     {analyticsStats?.unique_visitors ?? 0} visitors
                   </Badge>
                 </div>
                 <CardDescription className="text-xs mt-0.5">
-                  Live page views and unique visitors across all managed sites
+                  Live page views and unique visitors across your website
                 </CardDescription>
               </div>
               <Link
@@ -429,10 +424,9 @@ export default function DashboardPage() {
             <div className="h-[340px] w-full pt-4">
               {trafficTrend.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-xs text-muted-foreground gap-1">
-                  <span>No traffic recorded in the last 24 hours.</span>
+                  <span>No visits recorded in the last 24 hours.</span>
                   <span className="text-[11px] opacity-70">
-                    Page views from realm-reference will appear here in real
-                    time.
+                    New visits will appear here as readers visit your site.
                   </span>
                 </div>
               ) : (
@@ -532,10 +526,10 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-sm font-semibold">
-                  Recent Logs
+                  Recent Activity
                 </CardTitle>
                 <CardDescription className="text-xs mt-0.5">
-                  Latest system events and alerts
+                  Latest system activity, notices, and updates
                 </CardDescription>
               </div>
               <Link
