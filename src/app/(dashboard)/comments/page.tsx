@@ -726,7 +726,7 @@ function CommentsContent() {
       {
         accessorKey: "post_slug",
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Article Slug" />
+          <DataTableColumnHeader column={column} title="Article" />
         ),
         cell: ({ row }) => (
           <button
@@ -979,11 +979,11 @@ function CommentsContent() {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <MessagesSquare className="h-5 w-5 text-primary" />
-            Comments & Discussions
+            Reader Comments
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Organized by article slug with hierarchical conversation threads and
-            replies.
+            Manage reader discussions, conversation threads, and replies across
+            your blog.
           </p>
         </div>
 
