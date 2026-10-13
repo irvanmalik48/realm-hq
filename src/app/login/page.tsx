@@ -313,10 +313,7 @@ function LoginForm() {
       <CardContent>
         <form
           method="POST"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit(onSubmit)(e);
-          }}
+          onSubmit={handleSubmit(onSubmit)}
           className="space-y-4"
         >
           <div className="space-y-1.5">
