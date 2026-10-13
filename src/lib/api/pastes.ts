@@ -5,6 +5,7 @@ export interface PasteSummary {
   syntax: string;
   user_id?: string;
   is_public: boolean;
+  is_encrypted: boolean;
   views: number;
   size: number;
   expires_at?: string;
@@ -20,6 +21,7 @@ export interface CreatePastePayload {
   title?: string;
   content: string;
   syntax?: string;
+  password?: string;
   is_public?: boolean;
   ttl?: string;
   expires_at?: string;
@@ -82,15 +84,26 @@ export async function fetchPastes(
   };
 }
 
-export async function fetchPasteBySlug(slug: string): Promise<PasteDetail> {
+export async function fetchPasteBySlug(
+  slug: string,
+  password?: string,
+): Promise<PasteDetail> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (password) {
+    headers["X-Paste-Password"] = password;
+  }
+
   const res = await fetch(getPastesEndpoint(slug), {
     method: "GET",
-    headers: { Accept: "application/json" },
+    headers,
     cache: "no-store",
   });
 
   if (!res.ok) {
-    throw new Error(`Failed to fetch paste "${slug}": ${res.statusText}`);
+    const errData = await res.json().catch(() => null);
+    throw new Error(
+      errData?.error || `Failed to fetch paste "${slug}": ${res.statusText}`,
+    );
   }
 
   return res.json();
