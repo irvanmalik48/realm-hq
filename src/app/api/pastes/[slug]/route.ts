@@ -12,16 +12,24 @@ function getApiBaseUrl(): string {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
     const { slug } = await params;
+    const headers: Record<string, string> = { Accept: "application/json" };
+    const password =
+      req.headers.get("x-paste-password") ||
+      req.nextUrl.searchParams.get("password");
+    if (password) {
+      headers["X-Paste-Password"] = password;
+    }
+
     const res = await fetch(
       `${getApiBaseUrl()}/v1/pastes/${encodeURIComponent(slug)}`,
       {
         method: "GET",
-        headers: { Accept: "application/json" },
+        headers,
         cache: "no-store",
       },
     );
