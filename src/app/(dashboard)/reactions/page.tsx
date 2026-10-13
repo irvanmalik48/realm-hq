@@ -423,10 +423,10 @@ function ReactionsContent() {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Heart className="h-5 w-5 text-primary" />
-            Post Reactions
+            Reader Reactions
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Overview of likes and reactions across published articles.
+            See how readers respond to your articles and blog posts.
           </p>
         </div>
 
