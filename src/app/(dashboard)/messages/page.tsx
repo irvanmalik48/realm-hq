@@ -385,7 +385,7 @@ function MessagesContent() {
                   className="text-xs cursor-pointer gap-2 text-destructive focus:text-destructive"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  Delete Submission
+                  Delete Message
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -421,10 +421,11 @@ function MessagesContent() {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Mail className="h-5 w-5 text-primary" />
-            Contact Submissions
+            Contact Messages
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Inquiries and messages submitted through the website contact form.
+            Reader inquiries and messages submitted through your website contact
+            form.
           </p>
         </div>
 
