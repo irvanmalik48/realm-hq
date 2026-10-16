@@ -53,6 +53,7 @@ const cachedClients: {
   admin?: DynamicGrpcClient;
   log?: DynamicGrpcClient;
   token?: DynamicGrpcClient;
+  paste?: DynamicGrpcClient;
 } = {};
 
 interface ProtoPackage {
@@ -165,6 +166,13 @@ export function getTokenClient() {
     cachedClients.token = createClient("token.proto", "TokenService");
   }
   return cachedClients.token;
+}
+
+export function getPasteClient() {
+  if (!cachedClients.paste) {
+    cachedClients.paste = createClient("paste.proto", "PasteService");
+  }
+  return cachedClients.paste;
 }
 
 export function createMetadata(options?: {
