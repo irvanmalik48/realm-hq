@@ -42,8 +42,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint check
+      - name: Biome check
         run: pnpm lint
+
+      - name: Oxlint check
+        run: pnpm lint:oxlint
+
+      - name: ESLint check
+        run: pnpm lint:eslint
+
+      - name: Knip dead code check
+        run: pnpm run knip
 
       - name: Type check
         run: pnpm exec tsc --noEmit
@@ -55,3 +64,15 @@ jobs:
           NEXT_PUBLIC_API_URL: "https://api.irvanma.eu.org"
           GRPC_API_URL: "127.0.0.1:50051"
           NODE_ENV: "production"
+
+  security:
+    name: Semgrep OSS Security Scan
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Run Semgrep
+        run: semgrep scan --config="p/javascript" --config="p/typescript" --config="p/react" --config="p/nextjs" --config="p/security-audit" --error
