@@ -307,7 +307,7 @@ function PasteDetailContent() {
     if (!paste || !paste.content) return;
     const ext = SYNTAX_EXTENSIONS[paste.syntax.toLowerCase()] || "txt";
     const baseName = paste.title
-      ? paste.title.trim().replace(/[^a-zA-Z0-9_-]/g, "_")
+      ? paste.title.trim().replace(/[^\w-]/g, "_")
       : paste.slug;
     const filename = `${baseName}.${ext}`;
     const blob = new Blob([paste.content], {
