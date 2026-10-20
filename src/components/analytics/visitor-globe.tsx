@@ -144,6 +144,48 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   ];
 }
 
+// Project [latitude, longitude] onto 2D screen percentage for DOM beacons
+function projectGeoToScreen(
+  latDeg: number,
+  lonDeg: number,
+  phi: number,
+  theta: number,
+): { xPercent: number; yPercent: number; isVisible: boolean; depth: number } {
+  const phiRad = (latDeg * Math.PI) / 180;
+  const lamRad = (lonDeg * Math.PI) / 180 - Math.PI;
+  const cosPhi = Math.cos(phiRad);
+  const sinPhi = Math.sin(phiRad);
+  const cosLam = Math.cos(lamRad);
+  const sinLam = Math.sin(lamRad);
+
+  // Cartesian 3D sphere coordinate
+  const x3 = -cosPhi * cosLam;
+  const y3 = sinPhi;
+  const z3 = cosPhi * sinLam;
+
+  // Spherical rotation by phi (longitude) and theta (latitude tilt)
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const cosP = Math.cos(phi);
+  const sinP = Math.sin(phi);
+
+  const c = cosP * x3 + sinP * z3;
+  const s = sinP * sinT * x3 + cosT * y3 - cosP * sinT * z3;
+  const depth = -sinP * cosT * x3 + sinT * y3 + cosP * cosT * z3;
+
+  // 0.8 matches cobe's default globe radius ratio
+  const scale = 0.8;
+  const xPercent = ((c * scale + 1) / 2) * 100;
+  const yPercent = ((-s * scale + 1) / 2) * 100;
+
+  return {
+    xPercent,
+    yPercent,
+    isVisible: depth > 0.05,
+    depth,
+  };
+}
+
 export function VisitorGlobe({
   countryStats = [],
   totalViews = 0,
@@ -151,12 +193,18 @@ export function VisitorGlobe({
   className,
 }: VisitorGlobeProps) {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const markerElementsRef = React.useRef<
+    Record<string, HTMLButtonElement | null>
+  >({});
 
   // Rotation angles (phi: horizontal, theta: vertical tilt)
   const phiRef = React.useRef(0);
   const thetaRef = React.useRef(0.2);
   const [isAutoSpinning, setIsAutoSpinning] = React.useState(true);
   const [selectedCountryCode, setSelectedCountryCode] = React.useState<
+    string | null
+  >(null);
+  const [hoveredCountryCode, setHoveredCountryCode] = React.useState<
     string | null
   >(null);
 
@@ -267,26 +315,48 @@ export function VisitorGlobe({
         if (coords) {
           const trafficRatio = Math.min(1, stat.views / maxViews);
           const isSelected = selectedCountryCode === stat.country_code;
+          const isHovered = hoveredCountryCode === stat.country_code;
 
           // Dynamic lightness calculation:
           // Base lightness ranges from 0.40 (subtle) to 0.85 (bright primary)
-          // Sine wave oscillation gently shifts lightness in real-time
           const pulse = Math.sin(animTime * 3 + idx * 1.2) * 0.08;
           const baseLightness = 0.42 + trafficRatio * 0.42;
-          const lightness = isSelected
-            ? 0.95
-            : Math.min(0.96, Math.max(0.32, baseLightness + pulse));
+          const lightness =
+            isSelected || isHovered
+              ? 0.95
+              : Math.min(0.96, Math.max(0.32, baseLightness + pulse));
 
-          // HSL 217deg is vibrant primary blue/indigo
           const markerRgb = hslToRgb(217, 0.91, lightness);
 
           markers.push({
             location: coords,
-            size: isSelected
-              ? 0.09
-              : Math.max(0.04, 0.04 + trafficRatio * 0.06),
+            size:
+              isSelected || isHovered
+                ? 0.09
+                : Math.max(0.04, 0.04 + trafficRatio * 0.06),
             color: markerRgb,
           });
+
+          // Synchronize DOM overlay beacon coordinates in 60fps loop
+          const domEl = markerElementsRef.current[stat.country_code];
+          if (domEl) {
+            const proj = projectGeoToScreen(
+              coords[0],
+              coords[1],
+              phiRef.current,
+              thetaRef.current,
+            );
+            if (proj.isVisible) {
+              domEl.style.display = "block";
+              domEl.style.left = `${proj.xPercent}%`;
+              domEl.style.top = `${proj.yPercent}%`;
+              const fade = Math.min(1, Math.max(0, (proj.depth - 0.05) / 0.25));
+              domEl.style.opacity = `${fade}`;
+              domEl.style.zIndex = `${Math.round(proj.depth * 100)}`;
+            } else {
+              domEl.style.display = "none";
+            }
+          }
         }
       }
 
@@ -308,7 +378,13 @@ export function VisitorGlobe({
       if (animFrameId) cancelAnimationFrame(animFrameId);
       globe.destroy();
     };
-  }, [countryStats, maxViews, isAutoSpinning, selectedCountryCode]);
+  }, [
+    countryStats,
+    maxViews,
+    isAutoSpinning,
+    selectedCountryCode,
+    hoveredCountryCode,
+  ]);
 
   // Pointer drag event handlers for rotating the globe
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -392,24 +468,127 @@ export function VisitorGlobe({
         </div>
       </CardHeader>
 
-      <CardContent className="p-0 grid grid-cols-1 lg:grid-cols-12 min-h-[380px]">
-        {/* Globe Canvas View (7 cols) */}
-        <div className="relative lg:col-span-7 flex items-center justify-center min-h-[320px] sm:min-h-[380px] bg-gradient-to-b from-card/30 to-background/60 p-4 overflow-hidden">
+      <CardContent className="p-0 grid grid-cols-1 lg:grid-cols-12 min-h-[420px]">
+        {/* Globe Canvas View (7 cols) - Centered with equal spacing */}
+        <div className="relative lg:col-span-7 flex flex-col items-center justify-center min-h-[360px] sm:min-h-[420px] bg-gradient-to-b from-card/30 to-background/60 p-6 overflow-hidden">
           {/* Subtle ambient back-glow behind the opaque sphere */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="w-[300px] h-[300px] rounded-full bg-primary/10 blur-3xl opacity-60" />
+            <div className="size-[320px] rounded-full bg-primary/10 blur-3xl opacity-60" />
           </div>
 
-          <canvas
-            ref={canvasRef}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            className="w-full max-w-[380px] aspect-square cursor-grab active:cursor-grabbing select-none touch-none relative z-10"
-          />
+          {/* Centered Globe Container with Aspect Ratio Square */}
+          <div className="relative w-full max-w-[360px] sm:max-w-[390px] aspect-square mx-auto flex items-center justify-center">
+            <canvas
+              ref={canvasRef}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              className="w-full h-full cursor-grab active:cursor-grabbing select-none touch-none relative z-10"
+            />
+
+            {/* Informative Floating Country Beacons */}
+            <div className="absolute inset-0 pointer-events-none z-20 overflow-visible">
+              {countryStats.map((stat, idx) => {
+                const coords =
+                  COUNTRY_COORDINATES[stat.country_code.toUpperCase()];
+                if (!coords) return null;
+
+                const ratio = Math.min(1, stat.views / maxViews);
+                const isSelected = selectedCountryCode === stat.country_code;
+                const isHovered = hoveredCountryCode === stat.country_code;
+                const pulseLightness = 42 + ratio * 42;
+
+                return (
+                  <button
+                    type="button"
+                    key={stat.country_code}
+                    ref={(el) => {
+                      markerElementsRef.current[stat.country_code] = el;
+                    }}
+                    style={{ display: "none" }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto group cursor-pointer transition-transform duration-200 border-0 bg-transparent p-0 focus:outline-hidden"
+                    onClick={() => rotateToCountry(stat.country_code)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        rotateToCountry(stat.country_code);
+                      }
+                    }}
+                    onMouseEnter={() =>
+                      setHoveredCountryCode(stat.country_code)
+                    }
+                    onMouseLeave={() => setHoveredCountryCode(null)}
+                    aria-label={`Focus on ${stat.country || stat.country_code}`}
+                  >
+                    {/* Multi-tier Pulsing Beacon Rings */}
+                    <div className="relative flex items-center justify-center">
+                      <span
+                        className={cn(
+                          "absolute rounded-full animate-ping opacity-60 transition-all",
+                          isSelected || isHovered
+                            ? "size-6 bg-primary/50 duration-700"
+                            : "size-4 bg-primary/30 duration-1000",
+                        )}
+                        style={{
+                          animationDelay: `${idx * 150}ms`,
+                        }}
+                      />
+                      <span
+                        className={cn(
+                          "absolute rounded-full border border-primary/60 transition-all duration-300",
+                          isSelected || isHovered
+                            ? "size-5 scale-125 bg-primary/15"
+                            : "size-3.5 bg-primary/10",
+                        )}
+                      />
+                      {/* Core Glowing Dot with dynamic lightness box-shadow */}
+                      <span
+                        className={cn(
+                          "relative rounded-full transition-all duration-300",
+                          isSelected || isHovered
+                            ? "size-2.5 ring-2 ring-background scale-110"
+                            : "size-1.5",
+                        )}
+                        style={{
+                          backgroundColor: `hsl(217, 91%, ${
+                            isSelected || isHovered ? 95 : pulseLightness
+                          }%)`,
+                          boxShadow: `0 0 10px hsl(217, 91%, ${pulseLightness}%)`,
+                        }}
+                      />
+
+                      {/* Informative Floating Tooltip Pill */}
+                      <div
+                        className={cn(
+                          "absolute bottom-full left-1/2 -translate-x-1/2 mb-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-background/90 backdrop-blur-md border shadow-lg transition-all duration-200 whitespace-nowrap text-[11px]",
+                          isSelected || isHovered
+                            ? "opacity-100 scale-100 border-primary/60 shadow-primary/20 pointer-events-auto"
+                            : "opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto border-border/80",
+                        )}
+                      >
+                        <span className="text-xs">
+                          {getFlagEmoji(stat.country_code)}
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          {stat.country || stat.country_code}
+                        </span>
+                        <span className="font-mono text-primary font-medium">
+                          {stat.views}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          ({stat.percentage.toFixed(1)}%)
+                        </span>
+                        {/* Downward Caret */}
+                        <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-background/90" />
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Bottom telemetry overlay pill */}
-          <div className="absolute bottom-3 left-3 right-3 sm:right-auto flex items-center justify-between gap-2 px-3 py-1.5 rounded-md bg-background/80 backdrop-blur-md border border-border/60 text-[11px] text-muted-foreground z-20">
+          <div className="absolute bottom-3 left-4 right-4 sm:right-auto flex items-center justify-between gap-2 px-3 py-1.5 rounded-md bg-background/80 backdrop-blur-md border border-border/60 text-[11px] text-muted-foreground z-20">
             <div className="flex items-center gap-1.5 truncate">
               <Compass className="size-3.5 text-primary shrink-0 animate-pulse" />
               <span>
@@ -438,7 +617,7 @@ export function VisitorGlobe({
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto max-h-[340px] divide-y divide-border/30">
+          <div className="flex-1 overflow-y-auto max-h-[360px] divide-y divide-border/30">
             {countryStats.length === 0 ? (
               <div className="p-8 text-center text-xs text-muted-foreground">
                 No country telemetry recorded yet.
@@ -449,15 +628,30 @@ export function VisitorGlobe({
                 // Dynamic lightness from 38% to 80%
                 const barLightness = 38 + ratio * 42;
                 const isSelected = selectedCountryCode === item.country_code;
+                const isHovered = hoveredCountryCode === item.country_code;
+                const hasCoords = Boolean(
+                  COUNTRY_COORDINATES[item.country_code.toUpperCase()],
+                );
 
                 return (
                   <button
                     type="button"
                     key={item.country_code}
-                    onClick={() => rotateToCountry(item.country_code)}
+                    onClick={() => {
+                      if (hasCoords) {
+                        rotateToCountry(item.country_code);
+                      } else {
+                        setSelectedCountryCode(item.country_code);
+                      }
+                    }}
+                    onMouseEnter={() =>
+                      setHoveredCountryCode(item.country_code)
+                    }
+                    onMouseLeave={() => setHoveredCountryCode(null)}
                     className={cn(
                       "w-full flex flex-col gap-1.5 p-3 text-left transition-colors cursor-pointer hover:bg-muted/40",
-                      isSelected && "bg-primary/10 border-l-2 border-primary",
+                      (isSelected || isHovered) &&
+                        "bg-primary/10 border-l-2 border-primary",
                     )}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -470,6 +664,11 @@ export function VisitorGlobe({
                         </span>
                         <span className="text-xs font-medium text-foreground truncate">
                           {item.country || item.country_code}
+                          {!hasCoords && (
+                            <span className="ml-1 text-[10px] text-muted-foreground">
+                              (Direct/Private)
+                            </span>
+                          )}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -500,7 +699,7 @@ export function VisitorGlobe({
           </div>
 
           <div className="p-2.5 bg-muted/10 border-t border-border/40 text-[11px] text-muted-foreground text-center">
-            Click any country to center and highlight on the 3D globe.
+            Click or hover any country to inspect and highlight on the 3D globe.
           </div>
         </div>
       </CardContent>
