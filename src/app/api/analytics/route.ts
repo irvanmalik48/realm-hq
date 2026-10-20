@@ -22,6 +22,27 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_API_URL ||
       "http://localhost:8080";
 
+    const country =
+      req.headers.get("cf-ipcountry") ||
+      req.headers.get("x-country-code") ||
+      "";
+
+    const host =
+      req.headers.get("x-forwarded-host") ||
+      req.headers.get("host") ||
+      req.nextUrl.hostname ||
+      "";
+    const siteDomain =
+      body.site || (host ? host.split(",")[0].trim().split(":")[0] : "");
+
+    const payload = {
+      ...body,
+      site: siteDomain,
+      country_code:
+        body.country_code ||
+        (country && country !== "XX" ? country : undefined),
+    };
+
     const forwardRes = await fetch(`${apiUrl}/v1/analytics/events`, {
       method: "POST",
       headers: {
@@ -31,8 +52,11 @@ export async function POST(req: NextRequest) {
           req.headers.get("x-forwarded-for") ||
           req.headers.get("x-real-ip") ||
           "",
+        "CF-IPCountry": country,
+        "X-Country-Code": country,
+        "X-Site": siteDomain,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
 
     if (!forwardRes.ok) {
@@ -63,13 +87,14 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const period = searchParams.get("period") || "30d";
+    const site = searchParams.get("site") || "all";
     const apiUrl =
       env.NEXT_PUBLIC_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
       "http://localhost:8080";
 
     const res = await fetch(
-      `${apiUrl}/v1/analytics/stats?period=${encodeURIComponent(period)}`,
+      `${apiUrl}/v1/analytics/stats?period=${encodeURIComponent(period)}&site=${encodeURIComponent(site)}`,
       {
         cache: "no-store",
       },
