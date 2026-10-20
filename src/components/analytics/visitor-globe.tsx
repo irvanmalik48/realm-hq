@@ -1,6 +1,6 @@
 "use client";
 
-import createGlobe, { type Arc, type Marker } from "cobe";
+import createGlobe from "cobe";
 import {
   Compass,
   Globe as GlobeIcon,
@@ -88,9 +88,6 @@ const COUNTRY_COORDINATES: Record<string, [number, number]> = {
   CN: [35.8617, 104.1954],
 };
 
-// Headquarters/hub coordinates (Singapore / Southeast Asia routing hub)
-const HUB_COORDINATES: [number, number] = [1.3521, 103.8198];
-
 function getFlagEmoji(countryCode: string): string {
   if (!countryCode || countryCode.length !== 2 || countryCode === "XX") {
     return "🌐";
@@ -100,48 +97,6 @@ function getFlagEmoji(countryCode: string): string {
     .split("")
     .map((char) => 127397 + char.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
-}
-
-// Convert HSL values to normalized [r, g, b] in [0, 1] range for WebGL
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = l - c / 2;
-  let r = 0;
-  let g = 0;
-  let b = 0;
-
-  if (0 <= h && h < 60) {
-    r = c;
-    g = x;
-    b = 0;
-  } else if (60 <= h && h < 120) {
-    r = x;
-    g = c;
-    b = 0;
-  } else if (120 <= h && h < 180) {
-    r = 0;
-    g = c;
-    b = x;
-  } else if (180 <= h && h < 240) {
-    r = 0;
-    g = x;
-    b = c;
-  } else if (240 <= h && h < 300) {
-    r = x;
-    g = 0;
-    b = c;
-  } else if (300 <= h && h < 360) {
-    r = c;
-    g = 0;
-    b = x;
-  }
-
-  return [
-    Math.min(1, Math.max(0, r + m)),
-    Math.min(1, Math.max(0, g + m)),
-    Math.min(1, Math.max(0, b + m)),
-  ];
 }
 
 // Project [latitude, longitude] onto 2D screen percentage for DOM beacons
@@ -246,23 +201,9 @@ export function VisitorGlobe({
     onResize();
 
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    let animTime = 0;
     let animFrameId: number | null = null;
 
-    // Build arcs connecting visitor countries to hub
-    const arcs: Arc[] = [];
-    for (const stat of countryStats.slice(0, 8)) {
-      const coords = COUNTRY_COORDINATES[stat.country_code.toUpperCase()];
-      if (coords) {
-        arcs.push({
-          from: coords,
-          to: HUB_COORDINATES,
-          color: [0.25, 0.55, 0.95] as [number, number, number],
-        });
-      }
-    }
-
-    // Initialize cobe high-detail WebGL globe
+    // Initialize cobe high-detail WebGL globe without any extruded needles or arcs
     const globe = createGlobe(canvas, {
       devicePixelRatio: dpr,
       width: width * dpr || 800,
@@ -276,17 +217,10 @@ export function VisitorGlobe({
       baseColor: [0.16, 0.22, 0.34],
       markerColor: [0.23, 0.51, 0.96],
       glowColor: [0.12, 0.18, 0.3],
-      markerElevation: 0.04,
-      arcs,
-      arcColor: [0.25, 0.55, 0.95],
-      arcWidth: 0.6,
-      arcHeight: 0.25,
       markers: [],
     });
 
     const loop = () => {
-      animTime += 0.025;
-
       // Handle lerping to target country orientation or smooth auto-spin
       const target = targetRotationRef.current;
       if (target) {
@@ -307,55 +241,29 @@ export function VisitorGlobe({
         phiRef.current += 0.004;
       }
 
-      // Generate dynamic markers with lightness play on each frame
-      const markers: Marker[] = [];
+      // Synchronize DOM overlay pulsing point beacon coordinates in 60fps loop
       for (let idx = 0; idx < countryStats.length; idx++) {
         const stat = countryStats[idx];
         const coords = COUNTRY_COORDINATES[stat.country_code.toUpperCase()];
-        if (coords) {
-          const trafficRatio = Math.min(1, stat.views / maxViews);
-          const isSelected = selectedCountryCode === stat.country_code;
-          const isHovered = hoveredCountryCode === stat.country_code;
+        if (!coords) continue;
 
-          // Dynamic lightness calculation:
-          // Base lightness ranges from 0.40 (subtle) to 0.85 (bright primary)
-          const pulse = Math.sin(animTime * 3 + idx * 1.2) * 0.08;
-          const baseLightness = 0.42 + trafficRatio * 0.42;
-          const lightness =
-            isSelected || isHovered
-              ? 0.95
-              : Math.min(0.96, Math.max(0.32, baseLightness + pulse));
-
-          const markerRgb = hslToRgb(217, 0.91, lightness);
-
-          markers.push({
-            location: coords,
-            size:
-              isSelected || isHovered
-                ? 0.09
-                : Math.max(0.04, 0.04 + trafficRatio * 0.06),
-            color: markerRgb,
-          });
-
-          // Synchronize DOM overlay beacon coordinates in 60fps loop
-          const domEl = markerElementsRef.current[stat.country_code];
-          if (domEl) {
-            const proj = projectGeoToScreen(
-              coords[0],
-              coords[1],
-              phiRef.current,
-              thetaRef.current,
-            );
-            if (proj.isVisible) {
-              domEl.style.display = "block";
-              domEl.style.left = `${proj.xPercent}%`;
-              domEl.style.top = `${proj.yPercent}%`;
-              const fade = Math.min(1, Math.max(0, (proj.depth - 0.05) / 0.25));
-              domEl.style.opacity = `${fade}`;
-              domEl.style.zIndex = `${Math.round(proj.depth * 100)}`;
-            } else {
-              domEl.style.display = "none";
-            }
+        const domEl = markerElementsRef.current[stat.country_code];
+        if (domEl) {
+          const proj = projectGeoToScreen(
+            coords[0],
+            coords[1],
+            phiRef.current,
+            thetaRef.current,
+          );
+          if (proj.isVisible) {
+            domEl.style.display = "block";
+            domEl.style.left = `${proj.xPercent}%`;
+            domEl.style.top = `${proj.yPercent}%`;
+            const fade = Math.min(1, Math.max(0, (proj.depth - 0.05) / 0.25));
+            domEl.style.opacity = `${fade}`;
+            domEl.style.zIndex = `${Math.round(proj.depth * 100)}`;
+          } else {
+            domEl.style.display = "none";
           }
         }
       }
@@ -365,7 +273,6 @@ export function VisitorGlobe({
         theta: thetaRef.current,
         width: width * dpr || 800,
         height: width * dpr || 800,
-        markers,
       });
 
       animFrameId = requestAnimationFrame(loop);
@@ -378,13 +285,7 @@ export function VisitorGlobe({
       if (animFrameId) cancelAnimationFrame(animFrameId);
       globe.destroy();
     };
-  }, [
-    countryStats,
-    maxViews,
-    isAutoSpinning,
-    selectedCountryCode,
-    hoveredCountryCode,
-  ]);
+  }, [countryStats, isAutoSpinning]);
 
   // Pointer drag event handlers for rotating the globe
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
