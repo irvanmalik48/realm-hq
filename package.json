@@ -29,6 +29,7 @@
     "@tiptap/starter-kit": "^3.32.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
+    "cobe": "^2.0.1",
     "date-fns": "^4.4.0",
     "input-otp": "^1.5.0",
     "jotai": "^3.0.1",
