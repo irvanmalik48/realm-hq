@@ -9,6 +9,7 @@ import {
   FileText,
   Globe,
   Laptop,
+  Layers,
   Monitor,
   RefreshCw,
   Smartphone,
@@ -27,6 +28,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import { VisitorGlobe } from "@/components/analytics/visitor-globe";
 import { TableRowSkeleton } from "@/components/layout/table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -92,6 +94,20 @@ interface BrowserStat {
   count: number;
 }
 
+interface CountryStat {
+  country_code: string;
+  country: string;
+  views: number;
+  unique: number;
+  percentage: number;
+}
+
+interface SiteStat {
+  site: string;
+  views: number;
+  unique: number;
+}
+
 interface RecentPageView {
   id: string;
   path: string;
@@ -100,6 +116,9 @@ interface RecentPageView {
   browser: string;
   os: string;
   created_at: string;
+  site?: string;
+  country_code?: string;
+  country?: string;
 }
 
 interface AnalyticsStats {
@@ -112,11 +131,25 @@ interface AnalyticsStats {
   top_referrers: ReferrerStat[];
   device_stats: DeviceStat[];
   browser_stats: BrowserStat[];
+  country_stats?: CountryStat[];
+  site_stats?: SiteStat[];
   recent_views: RecentPageView[];
+}
+
+function getFlagEmoji(countryCode?: string): string {
+  if (!countryCode || countryCode.length !== 2 || countryCode === "XX") {
+    return "🌐";
+  }
+  const codePoints = countryCode
+    .toUpperCase()
+    .split("")
+    .map((char) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
 }
 
 export default function AnalyticsPage() {
   const [period, setPeriod] = React.useState("30d");
+  const [selectedSite, setSelectedSite] = React.useState("all");
   const [data, setData] = React.useState<AnalyticsStats | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -125,7 +158,11 @@ export default function AnalyticsPage() {
     async (showToast = false) => {
       try {
         if (showToast) setIsRefreshing(true);
-        const res = await fetch(`/api/analytics?period=${period}`);
+        const res = await fetch(
+          `/api/analytics?period=${encodeURIComponent(
+            period,
+          )}&site=${encodeURIComponent(selectedSite)}`,
+        );
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const json = await res.json();
         setData(json);
@@ -140,7 +177,7 @@ export default function AnalyticsPage() {
         setIsRefreshing(false);
       }
     },
-    [period],
+    [period, selectedSite],
   );
 
   React.useEffect(() => {
@@ -156,6 +193,20 @@ export default function AnalyticsPage() {
       setTrendData(buildContinuousTrend(data.views_trend, period));
     }
   }, [data?.views_trend, period]);
+
+  // Dynamically determine available telemetry sites
+  const availableSites = React.useMemo(() => {
+    const sites = new Set<string>();
+    if (data?.site_stats) {
+      data.site_stats.forEach((s) => {
+        if (s.site && s.site !== "unknown") sites.add(s.site);
+      });
+    }
+    // Pre-populate with standard ecosystem sites requested by user
+    sites.add("irvanma.eu.org");
+    sites.add("bin.irvanma.eu.org");
+    return Array.from(sites);
+  }, [data?.site_stats]);
 
   const topPost = data?.top_posts?.[0];
 
@@ -226,6 +277,51 @@ export default function AnalyticsPage() {
             Refresh
           </Button>
         </div>
+      </div>
+
+      {/* Site Telemetry Categories */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <Button
+          variant={selectedSite === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSelectedSite("all")}
+          className="h-8 px-3 text-xs gap-1.5 cursor-pointer rounded-full"
+        >
+          <Globe className="size-3.5" />
+          <span>All Sites</span>
+          {data?.total_views !== undefined && selectedSite === "all" && (
+            <Badge
+              variant="secondary"
+              className="text-[10px] h-4 px-1.5 ml-0.5 font-mono"
+            >
+              {data.total_views}
+            </Badge>
+          )}
+        </Button>
+
+        {availableSites.map((site) => {
+          const stat = data?.site_stats?.find((s) => s.site === site);
+          return (
+            <Button
+              key={site}
+              variant={selectedSite === site ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedSite(site)}
+              className="h-8 px-3 text-xs gap-1.5 cursor-pointer rounded-full"
+            >
+              <Layers className="size-3.5" />
+              <span>{site}</span>
+              {stat && (
+                <Badge
+                  variant={selectedSite === site ? "secondary" : "outline"}
+                  className="text-[10px] h-4 px-1.5 ml-0.5 font-mono"
+                >
+                  {stat.views}
+                </Badge>
+              )}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Top Summary KPI Cards */}
@@ -311,6 +407,13 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 3D Spinning Visitor Globe & Geographical Distribution */}
+      <VisitorGlobe
+        countryStats={data?.country_stats || []}
+        totalViews={data?.total_views || 0}
+        selectedSite={selectedSite}
+      />
 
       {/* Traffic Trend Chart */}
       <Card>
@@ -682,7 +785,24 @@ export default function AnalyticsPage() {
                         {visit.referrer}
                       </TableCell>
                       <TableCell className="text-xs py-2.5">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {visit.site && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] h-4.5 px-1.5 font-mono"
+                            >
+                              {visit.site}
+                            </Badge>
+                          )}
+                          {visit.country_code && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] h-4.5 px-1.5 font-mono gap-1"
+                            >
+                              <span>{getFlagEmoji(visit.country_code)}</span>
+                              <span>{visit.country_code}</span>
+                            </Badge>
+                          )}
                           <Badge
                             variant="secondary"
                             className="text-[10px] h-4.5 px-1.5 font-normal"
