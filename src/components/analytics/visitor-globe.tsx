@@ -1,5 +1,6 @@
 "use client";
 
+import createGlobe, { type Arc, type Marker } from "cobe";
 import {
   Compass,
   Globe as GlobeIcon,
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export interface CountryStat {
+interface CountryStat {
   country_code: string;
   country: string;
   views: number;
@@ -87,186 +88,8 @@ const COUNTRY_COORDINATES: Record<string, [number, number]> = {
   CN: [35.8617, 104.1954],
 };
 
-// Simplified polygon coordinates [lat, lon] for major continents
-const CONTINENTS: [number, number][][] = [
-  // North America
-  [
-    [70, -165],
-    [72, -130],
-    [65, -90],
-    [58, -65],
-    [48, -55],
-    [42, -70],
-    [32, -80],
-    [25, -80],
-    [20, -87],
-    [16, -93],
-    [10, -84],
-    [8, -77],
-    [15, -92],
-    [20, -105],
-    [28, -112],
-    [33, -118],
-    [40, -124],
-    [48, -125],
-    [58, -136],
-    [60, -145],
-    [65, -168],
-    [70, -165],
-  ],
-  // South America
-  [
-    [10, -75],
-    [7, -60],
-    [-2, -50],
-    [-10, -36],
-    [-20, -40],
-    [-30, -50],
-    [-40, -62],
-    [-54, -68],
-    [-50, -74],
-    [-38, -74],
-    [-20, -70],
-    [-5, -80],
-    [5, -77],
-    [10, -75],
-  ],
-  // Europe
-  [
-    [71, 28],
-    [68, 45],
-    [60, 32],
-    [55, 38],
-    [45, 30],
-    [40, 26],
-    [38, 22],
-    [36, -5],
-    [43, -9],
-    [48, -4],
-    [54, 8],
-    [58, 6],
-    [62, 5],
-    [71, 28],
-  ],
-  // Africa
-  [
-    [36, 10],
-    [32, 32],
-    [25, 35],
-    [12, 44],
-    [12, 51],
-    [2, 45],
-    [-11, 40],
-    [-25, 33],
-    [-34, 26],
-    [-34, 18],
-    [-22, 14],
-    [-5, 12],
-    [4, 9],
-    [5, -2],
-    [5, -10],
-    [14, -17],
-    [22, -16],
-    [32, -8],
-    [36, 0],
-    [36, 10],
-  ],
-  // Asia
-  [
-    [75, 100],
-    [70, 140],
-    [65, 170],
-    [60, 162],
-    [50, 140],
-    [42, 131],
-    [38, 120],
-    [30, 122],
-    [22, 114],
-    [22, 107],
-    [10, 106],
-    [1, 104],
-    [8, 98],
-    [18, 96],
-    [21, 89],
-    [10, 79],
-    [8, 77],
-    [22, 69],
-    [25, 62],
-    [24, 57],
-    [14, 53],
-    [12, 44],
-    [26, 36],
-    [35, 36],
-    [38, 45],
-    [45, 52],
-    [50, 58],
-    [60, 60],
-    [70, 70],
-    [75, 100],
-  ],
-  // Australia
-  [
-    [-12, 132],
-    [-12, 136],
-    [-18, 140],
-    [-14, 144],
-    [-24, 153],
-    [-32, 153],
-    [-38, 147],
-    [-38, 140],
-    [-35, 136],
-    [-32, 132],
-    [-34, 115],
-    [-22, 114],
-    [-16, 123],
-    [-12, 132],
-  ],
-  // UK
-  [
-    [58, -5],
-    [58, -2],
-    [52, 1],
-    [50, -5],
-    [52, -5],
-    [55, -3],
-    [58, -5],
-  ],
-  // Japan
-  [
-    [45, 142],
-    [43, 145],
-    [35, 140],
-    [31, 131],
-    [34, 131],
-    [38, 138],
-    [45, 142],
-  ],
-  // Indonesia (Sumatra, Java, Borneo, Sulawesi)
-  [
-    [5, 96],
-    [-5, 105],
-    [-7, 108],
-    [-8, 115],
-    [-8, 120],
-    [-4, 122],
-    [1, 125],
-    [4, 118],
-    [7, 117],
-    [1, 110],
-    [1, 100],
-    [5, 96],
-  ],
-  // Greenland
-  [
-    [83, -30],
-    [75, -20],
-    [60, -44],
-    [65, -53],
-    [76, -68],
-    [82, -60],
-    [83, -30],
-  ],
-];
+// Headquarters/hub coordinates (Singapore / Southeast Asia routing hub)
+const HUB_COORDINATES: [number, number] = [1.3521, 103.8198];
 
 function getFlagEmoji(countryCode: string): string {
   if (!countryCode || countryCode.length !== 2 || countryCode === "XX") {
@@ -279,6 +102,48 @@ function getFlagEmoji(countryCode: string): string {
   return String.fromCodePoint(...codePoints);
 }
 
+// Convert HSL values to normalized [r, g, b] in [0, 1] range for WebGL
+function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (0 <= h && h < 60) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (60 <= h && h < 120) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (120 <= h && h < 180) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (180 <= h && h < 240) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (240 <= h && h < 300) {
+    r = x;
+    g = 0;
+    b = c;
+  } else if (300 <= h && h < 360) {
+    r = c;
+    g = 0;
+    b = x;
+  }
+
+  return [
+    Math.min(1, Math.max(0, r + m)),
+    Math.min(1, Math.max(0, g + m)),
+    Math.min(1, Math.max(0, b + m)),
+  ];
+}
+
 export function VisitorGlobe({
   countryStats = [],
   totalViews = 0,
@@ -287,469 +152,185 @@ export function VisitorGlobe({
 }: VisitorGlobeProps) {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
-  // Globe rotation state (in radians) stored in ref for 60fps canvas rendering
-  const rotationRef = React.useRef<[number, number]>([0.4, 0.2]); // [lon, lat]
+  // Rotation angles (phi: horizontal, theta: vertical tilt)
+  const phiRef = React.useRef(0);
+  const thetaRef = React.useRef(0.2);
   const [isAutoSpinning, setIsAutoSpinning] = React.useState(true);
-  const [hoveredCountry, setHoveredCountry] =
-    React.useState<CountryStat | null>(null);
   const [selectedCountryCode, setSelectedCountryCode] = React.useState<
     string | null
   >(null);
 
   // Interaction refs
   const isDraggingRef = React.useRef(false);
-  const lastMousePosRef = React.useRef<[number, number]>([0, 0]);
-  const animationFrameRef = React.useRef<number | null>(null);
+  const pointerStartRef = React.useRef<[number, number]>([0, 0]);
   const targetRotationRef = React.useRef<[number, number] | null>(null);
 
   const maxViews = React.useMemo(() => {
     return Math.max(1, ...countryStats.map((c) => c.views));
   }, [countryStats]);
 
-  // Rotate smoothly towards a country when clicked
+  // Smoothly center the globe on the selected country
   const rotateToCountry = React.useCallback((code: string) => {
     const coords = COUNTRY_COORDINATES[code.toUpperCase()];
     if (!coords) return;
-    const targetLat = (coords[0] * Math.PI) / 180;
-    const targetLon = (-coords[1] * Math.PI) / 180;
-    targetRotationRef.current = [targetLon, -targetLat * 0.4];
+    const targetPhi = -(coords[1] * Math.PI) / 180 - Math.PI / 2;
+    const targetTheta = Math.max(
+      -0.5,
+      Math.min(0.5, ((coords[0] * Math.PI) / 180) * 0.6),
+    );
+    targetRotationRef.current = [targetPhi, targetTheta];
     setSelectedCountryCode(code);
     setIsAutoSpinning(false);
   }, []);
 
-  // Canvas drawing loop
+  // WebGL 3D Globe initialization and render loop via cobe
   React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
+    let width = 0;
+    const onResize = () => {
+      if (canvas) {
+        width = canvas.offsetWidth;
+      }
+    };
+    window.addEventListener("resize", onResize);
+    onResize();
+
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
     let animTime = 0;
+    let animFrameId: number | null = null;
 
-    const render = () => {
-      animTime += 0.02;
+    // Build arcs connecting visitor countries to hub
+    const arcs: Arc[] = [];
+    for (const stat of countryStats.slice(0, 8)) {
+      const coords = COUNTRY_COORDINATES[stat.country_code.toUpperCase()];
+      if (coords) {
+        arcs.push({
+          from: coords,
+          to: HUB_COORDINATES,
+          color: [0.25, 0.55, 0.95] as [number, number, number],
+        });
+      }
+    }
 
-      // Handle auto-spinning or target lerping
+    // Initialize cobe high-detail WebGL globe
+    const globe = createGlobe(canvas, {
+      devicePixelRatio: dpr,
+      width: width * dpr || 800,
+      height: width * dpr || 800,
+      phi: phiRef.current,
+      theta: thetaRef.current,
+      dark: 1,
+      diffuse: 1.25,
+      mapSamples: 16000,
+      mapBrightness: 5.5,
+      baseColor: [0.16, 0.22, 0.34],
+      markerColor: [0.23, 0.51, 0.96],
+      glowColor: [0.12, 0.18, 0.3],
+      markerElevation: 0.04,
+      arcs,
+      arcColor: [0.25, 0.55, 0.95],
+      arcWidth: 0.6,
+      arcHeight: 0.25,
+      markers: [],
+    });
+
+    const loop = () => {
+      animTime += 0.025;
+
+      // Handle lerping to target country orientation or smooth auto-spin
       const target = targetRotationRef.current;
       if (target) {
-        const [curLon, curLat] = rotationRef.current;
-        const [targetLon, targetLat] = target;
-        const dLon = targetLon - curLon;
-        const dLat = targetLat - curLat;
-        if (Math.abs(dLon) < 0.005 && Math.abs(dLat) < 0.005) {
+        const [targetPhi, targetTheta] = target;
+        const curPhi = phiRef.current;
+        const curTheta = thetaRef.current;
+        const dPhi = targetPhi - curPhi;
+        const dTheta = targetTheta - curTheta;
+        if (Math.abs(dPhi) < 0.005 && Math.abs(dTheta) < 0.005) {
+          phiRef.current = targetPhi;
+          thetaRef.current = targetTheta;
           targetRotationRef.current = null;
-          rotationRef.current = [targetLon, targetLat];
         } else {
-          rotationRef.current = [curLon + dLon * 0.08, curLat + dLat * 0.08];
+          phiRef.current += dPhi * 0.08;
+          thetaRef.current += dTheta * 0.08;
         }
       } else if (isAutoSpinning && !isDraggingRef.current) {
-        rotationRef.current = [
-          rotationRef.current[0] + 0.0035,
-          rotationRef.current[1],
-        ];
+        phiRef.current += 0.004;
       }
 
-      // Resize setup
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      const width = rect.width;
-      const height = rect.height;
-
-      if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-      }
-
-      ctx.save();
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, width, height);
-
-      const cx = width / 2;
-      const cy = height / 2;
-      const radius = Math.min(width, height) * 0.42;
-
-      const [lon0, lat0] = rotationRef.current;
-
-      // 1. Draw Atmospheric Glow behind the opaque sphere
-      const atmoGrad = ctx.createRadialGradient(
-        cx,
-        cy,
-        radius * 0.88,
-        cx,
-        cy,
-        radius * 1.18,
-      );
-      atmoGrad.addColorStop(0, "rgba(59, 130, 246, 0.22)");
-      atmoGrad.addColorStop(0.5, "rgba(99, 102, 241, 0.08)");
-      atmoGrad.addColorStop(1, "rgba(99, 102, 241, 0)");
-      ctx.fillStyle = atmoGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius * 1.18, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2. Draw Solid Opaque 3D Sphere Body with Directional Shading
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.clip();
-
-      // Realistic 3D Sphere lighting: light source from top-left (-0.35R, -0.35R)
-      const lightX = cx - radius * 0.35;
-      const lightY = cy - radius * 0.35;
-      const sphereGrad = ctx.createRadialGradient(
-        lightX,
-        lightY,
-        radius * 0.1,
-        cx,
-        cy,
-        radius * 1.05,
-      );
-      // Opaque dark theme shaded globe
-      sphereGrad.addColorStop(0, "#1e293b"); // specular ambient highlight
-      sphereGrad.addColorStop(0.35, "#0f172a"); // primary illuminated hemisphere
-      sphereGrad.addColorStop(0.75, "#090d16"); // terminator transition
-      sphereGrad.addColorStop(1, "#020617"); // deep shadow limb
-
-      ctx.fillStyle = sphereGrad;
-      ctx.fill();
-
-      // 3. Draw Curvature Parallels & Meridians (Subtle Grid on Opaque Face)
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-      ctx.lineWidth = 1;
-
-      // Parallels (Latitude lines)
-      const parallels = [-60, -30, 0, 30, 60];
-      parallels.forEach((latDeg) => {
-        const phi = (latDeg * Math.PI) / 180;
-        ctx.beginPath();
-        let first = true;
-        for (let lonDeg = -180; lonDeg <= 180; lonDeg += 5) {
-          const lam = (lonDeg * Math.PI) / 180;
-          const cosC =
-            Math.sin(lat0) * Math.sin(phi) +
-            Math.cos(lat0) * Math.cos(phi) * Math.cos(lam - lon0);
-          if (cosC > 0) {
-            const x = Math.cos(phi) * Math.sin(lam - lon0);
-            const y = -(
-              Math.cos(lat0) * Math.sin(phi) -
-              Math.sin(lat0) * Math.cos(phi) * Math.cos(lam - lon0)
-            );
-            const sx = cx + x * radius;
-            const sy = cy + y * radius;
-            if (first) {
-              ctx.moveTo(sx, sy);
-              first = false;
-            } else {
-              ctx.lineTo(sx, sy);
-            }
-          } else {
-            first = true;
-          }
-        }
-        ctx.stroke();
-      });
-
-      // Meridians (Longitude lines)
-      for (let lonDeg = -180; lonDeg < 180; lonDeg += 30) {
-        const lam = (lonDeg * Math.PI) / 180;
-        ctx.beginPath();
-        let first = true;
-        for (let latDeg = -85; latDeg <= 85; latDeg += 4) {
-          const phi = (latDeg * Math.PI) / 180;
-          const cosC =
-            Math.sin(lat0) * Math.sin(phi) +
-            Math.cos(lat0) * Math.cos(phi) * Math.cos(lam - lon0);
-          if (cosC > 0) {
-            const x = Math.cos(phi) * Math.sin(lam - lon0);
-            const y = -(
-              Math.cos(lat0) * Math.sin(phi) -
-              Math.sin(lat0) * Math.cos(phi) * Math.cos(lam - lon0)
-            );
-            const sx = cx + x * radius;
-            const sy = cy + y * radius;
-            if (first) {
-              ctx.moveTo(sx, sy);
-              first = false;
-            } else {
-              ctx.lineTo(sx, sy);
-            }
-          } else {
-            first = true;
-          }
-        }
-        ctx.stroke();
-      }
-
-      // 4. Draw Continents (Opaque Surface Projection)
-      CONTINENTS.forEach((poly) => {
-        ctx.beginPath();
-        let started = false;
-        poly.forEach(([latDeg, lonDeg]) => {
-          const phi = (latDeg * Math.PI) / 180;
-          const lam = (lonDeg * Math.PI) / 180;
-          const cosC =
-            Math.sin(lat0) * Math.sin(phi) +
-            Math.cos(lat0) * Math.cos(phi) * Math.cos(lam - lon0);
-          if (cosC > 0) {
-            const x = Math.cos(phi) * Math.sin(lam - lon0);
-            const y = -(
-              Math.cos(lat0) * Math.sin(phi) -
-              Math.sin(lat0) * Math.cos(phi) * Math.cos(lam - lon0)
-            );
-            const sx = cx + x * radius;
-            const sy = cy + y * radius;
-            if (!started) {
-              ctx.moveTo(sx, sy);
-              started = true;
-            } else {
-              ctx.lineTo(sx, sy);
-            }
-          }
-        });
-
-        if (started) {
-          ctx.fillStyle = "rgba(255, 255, 255, 0.065)";
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
-          ctx.lineWidth = 0.8;
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-        }
-      });
-
-      // 5. Draw Primary Color Indicators with Lightness being played with
-      countryStats.forEach((stat, index) => {
+      // Generate dynamic markers with lightness play on each frame
+      const markers: Marker[] = [];
+      for (let idx = 0; idx < countryStats.length; idx++) {
+        const stat = countryStats[idx];
         const coords = COUNTRY_COORDINATES[stat.country_code.toUpperCase()];
-        if (!coords) return;
+        if (coords) {
+          const trafficRatio = Math.min(1, stat.views / maxViews);
+          const isSelected = selectedCountryCode === stat.country_code;
 
-        const phi = (coords[0] * Math.PI) / 180;
-        const lam = (coords[1] * Math.PI) / 180;
+          // Dynamic lightness calculation:
+          // Base lightness ranges from 0.40 (subtle) to 0.85 (bright primary)
+          // Sine wave oscillation gently shifts lightness in real-time
+          const pulse = Math.sin(animTime * 3 + idx * 1.2) * 0.08;
+          const baseLightness = 0.42 + trafficRatio * 0.42;
+          const lightness = isSelected
+            ? 0.95
+            : Math.min(0.96, Math.max(0.32, baseLightness + pulse));
 
-        // Orthographic projection components
-        const cosC =
-          Math.sin(lat0) * Math.sin(phi) +
-          Math.cos(lat0) * Math.cos(phi) * Math.cos(lam - lon0);
+          // HSL 217deg is vibrant primary blue/indigo
+          const markerRgb = hslToRgb(217, 0.91, lightness);
 
-        // Hide back-face points (opaque globe culls behind)
-        if (cosC <= 0.05) return;
-
-        const x = Math.cos(phi) * Math.sin(lam - lon0);
-        const y = -(
-          Math.cos(lat0) * Math.sin(phi) -
-          Math.sin(lat0) * Math.cos(phi) * Math.cos(lam - lon0)
-        );
-        const z = cosC; // Depth towards viewer
-
-        const sx = cx + x * radius;
-        const sy = cy + y * radius;
-
-        // Visitor volume density ratio [0, 1]
-        const trafficRatio = Math.min(1, stat.views / maxViews);
-
-        // LIGHTNESS PLAY:
-        // Base lightness scales with traffic volume: 38% (subtle) to 80% (radiant)
-        // Pulsing oscillation dynamically shifts lightness in real-time
-        const pulse = Math.sin(animTime * 3 + index * 1.2) * 8;
-        const baseLightness = 38 + trafficRatio * 42;
-        const lightness = Math.min(94, Math.max(28, baseLightness + pulse));
-
-        const isHovered = hoveredCountry?.country_code === stat.country_code;
-        const isSelected = selectedCountryCode === stat.country_code;
-
-        // Lightness boost on hover / select
-        const finalLightness = isHovered || isSelected ? 88 : lightness;
-        const primaryColor = `hsl(217, 91%, ${finalLightness}%)`;
-        const primaryGlow = `hsla(217, 91%, ${finalLightness}%, ${
-          0.3 + trafficRatio * 0.4
-        })`;
-
-        // Vertical elevation needle (pin height proportional to traffic density)
-        const pinHeight = 12 + trafficRatio * 24;
-        const tx = cx + x * (radius + pinHeight);
-        const ty = cy + y * (radius + pinHeight);
-
-        // 5a. Pin Elevation Beam
-        ctx.beginPath();
-        ctx.moveTo(sx, sy);
-        ctx.lineTo(tx, ty);
-        ctx.strokeStyle = primaryGlow;
-        ctx.lineWidth = 1.6;
-        ctx.stroke();
-
-        // 5b. Ground Ripple Ring expanding outward
-        const ripplePhase = (animTime * 1.5 + index * 0.7) % 1;
-        const rippleRadius = 3 + trafficRatio * 4 + ripplePhase * 16;
-        ctx.beginPath();
-        ctx.arc(sx, sy, rippleRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = `hsla(217, 91%, ${finalLightness}%, ${
-          (1 - ripplePhase) * 0.5
-        })`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // 5c. Surface Marker Dot
-        ctx.beginPath();
-        ctx.arc(sx, sy, 3 + trafficRatio * 3, 0, Math.PI * 2);
-        ctx.fillStyle = primaryColor;
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 8;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // 5d. Pin Top Beacon Orb (High Lightness Glow)
-        ctx.beginPath();
-        ctx.arc(
-          tx,
-          ty,
-          isHovered ? 4.5 : 2.5 + trafficRatio * 2,
-          0,
-          Math.PI * 2,
-        );
-        ctx.fillStyle = `hsl(217, 100%, ${Math.min(98, finalLightness + 14)}%)`;
-        ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 12;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // 5e. Hover / Selected Tooltip Callout
-        if (isHovered || isSelected || z > 0.75) {
-          ctx.save();
-          const flag = getFlagEmoji(stat.country_code);
-          const label = `${flag} ${stat.country_code} (${stat.views})`;
-
-          ctx.font = "bold 10px monospace";
-          const textMetrics = ctx.measureText(label);
-          const padX = 6;
-          const padY = 3;
-          const boxW = textMetrics.width + padX * 2;
-          const boxH = 16;
-          const boxX = tx - boxW / 2;
-          const boxY = ty - boxH - 6;
-
-          // Callout pill background
-          ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-          ctx.strokeStyle = primaryColor;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.roundRect(boxX, boxY, boxW, boxH, 4);
-          ctx.fill();
-          ctx.stroke();
-
-          // Callout text
-          ctx.fillStyle = "#f8fafc";
-          ctx.fillText(label, boxX + padX, boxY + boxH - padY - 1);
-          ctx.restore();
+          markers.push({
+            location: coords,
+            size: isSelected
+              ? 0.09
+              : Math.max(0.04, 0.04 + trafficRatio * 0.06),
+            color: markerRgb,
+          });
         }
+      }
+
+      globe.update({
+        phi: phiRef.current,
+        theta: thetaRef.current,
+        width: width * dpr || 800,
+        height: width * dpr || 800,
+        markers,
       });
 
-      // 6. Draw Opaque Rim Silhouette & Inner Glass Sheen
-      ctx.restore(); // unclip
-
-      // Opaque sphere outer perimeter stroke
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      // Subtle rim specular arc
-      const rimSheen = ctx.createLinearGradient(
-        cx - radius,
-        cy - radius,
-        cx + radius,
-        cy + radius,
-      );
-      rimSheen.addColorStop(0, "rgba(255, 255, 255, 0.25)");
-      rimSheen.addColorStop(0.5, "rgba(255, 255, 255, 0.0)");
-      rimSheen.addColorStop(1, "rgba(59, 130, 246, 0.2)");
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = rimSheen;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      ctx.restore();
-
-      animationFrameRef.current = requestAnimationFrame(render);
+      animFrameId = requestAnimationFrame(loop);
     };
 
-    render();
+    animFrameId = requestAnimationFrame(loop);
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+      window.removeEventListener("resize", onResize);
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      globe.destroy();
     };
-  }, [
-    isAutoSpinning,
-    countryStats,
-    maxViews,
-    hoveredCountry,
-    selectedCountryCode,
-  ]);
+  }, [countryStats, maxViews, isAutoSpinning, selectedCountryCode]);
 
   // Pointer drag event handlers for rotating the globe
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     isDraggingRef.current = true;
-    lastMousePosRef.current = [e.clientX, e.clientY];
+    pointerStartRef.current = [e.clientX, e.clientY];
     setIsAutoSpinning(false);
     targetRotationRef.current = null;
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!isDraggingRef.current) return;
+    const [startX, startY] = pointerStartRef.current;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    pointerStartRef.current = [e.clientX, e.clientY];
 
-    if (isDraggingRef.current) {
-      const [lastX, lastY] = lastMousePosRef.current;
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      lastMousePosRef.current = [e.clientX, e.clientY];
-
-      const [lon, lat] = rotationRef.current;
-      rotationRef.current = [
-        lon + dx * 0.006,
-        Math.max(-0.9, Math.min(0.9, lat - dy * 0.006)), // Clamp tilt
-      ];
-      return;
-    }
-
-    // Hit-testing indicators for hover tooltip
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    const radius = Math.min(rect.width, rect.height) * 0.42;
-    const [lon0, lat0] = rotationRef.current;
-
-    let matched: CountryStat | null = null;
-    for (const stat of countryStats) {
-      const coords = COUNTRY_COORDINATES[stat.country_code.toUpperCase()];
-      if (!coords) continue;
-      const phi = (coords[0] * Math.PI) / 180;
-      const lam = (coords[1] * Math.PI) / 180;
-      const cosC =
-        Math.sin(lat0) * Math.sin(phi) +
-        Math.cos(lat0) * Math.cos(phi) * Math.cos(lam - lon0);
-
-      if (cosC > 0.05) {
-        const x = Math.cos(phi) * Math.sin(lam - lon0);
-        const y = -(
-          Math.cos(lat0) * Math.sin(phi) -
-          Math.sin(lat0) * Math.cos(phi) * Math.cos(lam - lon0)
-        );
-        const sx = cx + x * radius;
-        const sy = cy + y * radius;
-        const dist = Math.hypot(mx - sx, my - sy);
-        if (dist < 18) {
-          matched = stat;
-          break;
-        }
-      }
-    }
-    setHoveredCountry(matched);
+    phiRef.current += dx * 0.005;
+    thetaRef.current = Math.max(
+      -0.8,
+      Math.min(0.8, thetaRef.current - dy * 0.005),
+    );
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -770,7 +351,7 @@ export function VisitorGlobe({
             <span>Geographical Distribution</span>
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Anonymous visitor tracking projected on a 3D spinning globe.
+            Anonymous visitor tracking projected on an opaque 3D spinning globe.
             Lightness scales with visitor density.
           </p>
         </div>
@@ -799,7 +380,7 @@ export function VisitorGlobe({
             variant="ghost"
             size="sm"
             onClick={() => {
-              targetRotationRef.current = [0.4, 0.2];
+              targetRotationRef.current = [0, 0.2];
               setSelectedCountryCode(null);
               setIsAutoSpinning(true);
             }}
@@ -813,17 +394,22 @@ export function VisitorGlobe({
 
       <CardContent className="p-0 grid grid-cols-1 lg:grid-cols-12 min-h-[380px]">
         {/* Globe Canvas View (7 cols) */}
-        <div className="relative lg:col-span-7 flex items-center justify-center min-h-[320px] sm:min-h-[380px] bg-gradient-to-b from-card/30 to-background/60 p-4">
+        <div className="relative lg:col-span-7 flex items-center justify-center min-h-[320px] sm:min-h-[380px] bg-gradient-to-b from-card/30 to-background/60 p-4 overflow-hidden">
+          {/* Subtle ambient back-glow behind the opaque sphere */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="w-[300px] h-[300px] rounded-full bg-primary/10 blur-3xl opacity-60" />
+          </div>
+
           <canvas
             ref={canvasRef}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            className="w-full h-[320px] sm:h-[380px] cursor-grab active:cursor-grabbing select-none touch-none"
+            className="w-full max-w-[380px] aspect-square cursor-grab active:cursor-grabbing select-none touch-none relative z-10"
           />
 
           {/* Bottom telemetry overlay pill */}
-          <div className="absolute bottom-3 left-3 right-3 sm:right-auto flex items-center justify-between gap-2 px-3 py-1.5 rounded-md bg-background/80 backdrop-blur-md border border-border/60 text-[11px] text-muted-foreground">
+          <div className="absolute bottom-3 left-3 right-3 sm:right-auto flex items-center justify-between gap-2 px-3 py-1.5 rounded-md bg-background/80 backdrop-blur-md border border-border/60 text-[11px] text-muted-foreground z-20">
             <div className="flex items-center gap-1.5 truncate">
               <Compass className="size-3.5 text-primary shrink-0 animate-pulse" />
               <span>
