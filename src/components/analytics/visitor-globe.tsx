@@ -450,9 +450,8 @@ export function VisitorGlobe({
                             : "size-1.5",
                         )}
                         style={{
-                          backgroundColor: `hsl(217, 91%, ${
-                            isSelected || isHovered ? 95 : pulseLightness
-                          }%)`,
+                          backgroundColor: `hsl(217, 91%, ${isSelected || isHovered ? 95 : pulseLightness
+                            }%)`,
                           boxShadow: `0 0 10px hsl(217, 91%, ${pulseLightness}%)`,
                         }}
                       />
@@ -552,7 +551,7 @@ export function VisitorGlobe({
                     className={cn(
                       "w-full flex flex-col gap-1.5 p-3 text-left transition-colors cursor-pointer hover:bg-muted/40",
                       (isSelected || isHovered) &&
-                        "bg-primary/10 border-l-2 border-primary",
+                      "bg-primary/10 border-l-2 border-primary",
                     )}
                   >
                     <div className="flex items-center justify-between gap-2">
