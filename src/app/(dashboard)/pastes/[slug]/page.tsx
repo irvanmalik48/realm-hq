@@ -223,9 +223,7 @@ function PasteDetailContent() {
         if (ignore) return;
         console.error("Failed to load paste:", err);
       } finally {
-        if (!ignore) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     }
     loadPaste();
@@ -234,10 +232,11 @@ function PasteDetailContent() {
     };
   }, [slugParam]);
 
+  const pasteContent = paste?.content;
   const lines = React.useMemo(() => {
-    if (!paste?.content) return [];
-    return paste.content.split("\n");
-  }, [paste?.content]);
+    if (!pasteContent) return [];
+    return pasteContent.split("\n");
+  }, [pasteContent]);
 
   const rawUrl = React.useMemo(() => {
     if (!paste) return "";
