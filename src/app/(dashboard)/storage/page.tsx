@@ -334,16 +334,56 @@ function StorageContent() {
     setIsUploading(true);
     const toastId = toast.loading(`Uploading & compressing ${file.name}...`);
     try {
+      // Obtain direct backend upload URL and session token (bypassing Vercel 4.5 MB serverless limit)
+      let uploadUrl = "/api/storage";
+      let token = "";
+
+      try {
+        const tokenRes = await fetch("/api/storage/token", {
+          cache: "no-store",
+        });
+        if (tokenRes.ok) {
+          const authData = await tokenRes.json();
+          if (authData.uploadUrl) uploadUrl = authData.uploadUrl;
+          if (authData.token) token = authData.token;
+        }
+      } catch {
+        // Fallback to local endpoint if token fetch fails
+      }
+
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/storage", {
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const res = await fetch(uploadUrl, {
         method: "POST",
+        headers,
         body: formData,
+        credentials: "include",
       });
 
+      if (!res.ok) {
+        let errorMsg = `Upload failed (${res.status})`;
+        try {
+          const json = await res.json();
+          if (json.error) errorMsg = json.error;
+          else if (json.message) errorMsg = json.message;
+        } catch {
+          const text = await res.text();
+          if (text.includes("FUNCTION_PAYLOAD_TOO_LARGE")) {
+            errorMsg = "File exceeds the serverless payload limit.";
+          } else if (text) {
+            errorMsg = text.slice(0, 120);
+          }
+        }
+        throw new Error(errorMsg);
+      }
+
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Upload failed");
 
       toast.success("File uploaded & compressed successfully", {
         id: toastId,
