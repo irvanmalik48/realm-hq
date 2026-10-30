@@ -7,6 +7,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -75,79 +76,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const login = async (credentials: {
-    identifier: string;
-    password: string;
-  }) => {
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-      });
+  const login = useCallback(
+    async (credentials: { identifier: string; password: string }) => {
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(credentials),
+        });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        return { success: false, error: errorData?.error || "Login failed" };
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => null);
+          return { success: false, error: errorData?.error || "Login failed" };
+        }
+
+        const data = await res.json().catch(() => null);
+        if (!data) {
+          return { success: false, error: "Empty response from server" };
+        }
+
+        if (data.two_factor_required) {
+          return {
+            success: true,
+            twoFactorRequired: true,
+            tempToken: data.temp_token,
+          };
+        }
+
+        setUser(data.user);
+        setAdmin(data.admin);
+        return { success: true };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Network error";
+        return { success: false, error: message };
       }
+    },
+    [],
+  );
 
-      const data = await res.json().catch(() => null);
-      if (!data) {
-        return { success: false, error: "Empty response from server" };
+  const verify2FA = useCallback(
+    async (data: { tempToken: string; code: string }) => {
+      try {
+        const res = await fetch("/api/auth/2fa/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            temp_token: data.tempToken,
+            tempToken: data.tempToken,
+            code: data.code,
+          }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => null);
+          return {
+            success: false,
+            error: errorData?.error || "Verification failed",
+          };
+        }
+
+        const resData = await res.json().catch(() => null);
+        if (!resData) {
+          return { success: false, error: "Empty response from server" };
+        }
+
+        setUser(resData.user);
+        setAdmin(resData.admin);
+        return { success: true };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Network error";
+        return { success: false, error: message };
       }
+    },
+    [],
+  );
 
-      if (data.two_factor_required) {
-        return {
-          success: true,
-          twoFactorRequired: true,
-          tempToken: data.temp_token,
-        };
-      }
-
-      setUser(data.user);
-      setAdmin(data.admin);
-      return { success: true };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Network error";
-      return { success: false, error: message };
-    }
-  };
-
-  const verify2FA = async (data: { tempToken: string; code: string }) => {
-    try {
-      const res = await fetch("/api/auth/2fa/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          temp_token: data.tempToken,
-          tempToken: data.tempToken,
-          code: data.code,
-        }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        return {
-          success: false,
-          error: errorData?.error || "Verification failed",
-        };
-      }
-
-      const resData = await res.json().catch(() => null);
-      if (!resData) {
-        return { success: false, error: "Empty response from server" };
-      }
-
-      setUser(resData.user);
-      setAdmin(resData.admin);
-      return { success: true };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Network error";
-      return { success: false, error: message };
-    }
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } finally {
@@ -155,27 +159,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAdmin(null);
       router.push("/login", { transitionTypes: ["nav-back"] });
     }
-  };
+  }, [router]);
 
-  const hasPermission = (perm: string): boolean => {
-    if (!admin) return false;
-    if (admin.is_superadmin) return true;
-    return admin.permissions.includes("*") || admin.permissions.includes(perm);
-  };
+  const hasPermission = useCallback(
+    (perm: string): boolean => {
+      if (!admin) return false;
+      if (admin.is_superadmin) return true;
+      return (
+        admin.permissions.includes("*") || admin.permissions.includes(perm)
+      );
+    },
+    [admin],
+  );
+
+  const authContextValue = useMemo(
+    () => ({
+      user,
+      admin,
+      isLoading,
+      login,
+      verify2FA,
+      logout,
+      refresh,
+      hasPermission,
+    }),
+    [user, admin, isLoading, login, verify2FA, logout, refresh, hasPermission],
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        admin,
-        isLoading,
-        login,
-        verify2FA,
-        logout,
-        refresh,
-        hasPermission,
-      }}
-    >
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );
