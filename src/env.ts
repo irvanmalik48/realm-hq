@@ -15,12 +15,14 @@ export const env = createEnv({
     NEXT_PUBLIC_SITE_NAME: z.string().default("Realm HQ"),
     NEXT_PUBLIC_APP_URL: z.string().optional(),
     NEXT_PUBLIC_API_URL: z.string().optional(),
+    NEXT_PUBLIC_CDN_URL: z.string().optional(),
     NEXT_PUBLIC_BLOG_URL: z.string().optional(),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_CDN_URL: process.env.NEXT_PUBLIC_CDN_URL,
     NEXT_PUBLIC_BLOG_URL: process.env.NEXT_PUBLIC_BLOG_URL,
   },
 });
