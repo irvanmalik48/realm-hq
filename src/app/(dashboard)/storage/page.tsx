@@ -56,6 +56,7 @@ import {
   TableRowSkeleton,
   TableSkeleton,
 } from "@/components/layout/table-skeleton";
+import { UploadQueueWidget } from "@/components/storage/upload-queue-widget";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,6 +107,7 @@ import {
   getPublicStorageUrl,
   resolveStorageUrl,
 } from "@/lib/storage";
+import { uploadQueue } from "@/lib/upload-queue";
 import { formatBytes } from "@/lib/utils";
 
 interface FileItem {
@@ -279,8 +281,7 @@ function StorageContent() {
 
   // Upload modal & drag drop
   const [uploadOpen, setUploadOpen] = React.useState(false);
-  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [isUploading, setIsUploading] = React.useState(false);
+  const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]);
   const [isDragging, setIsDragging] = React.useState(false);
   const dragCounter = React.useRef(0);
 
@@ -337,90 +338,23 @@ function StorageContent() {
     fetchFiles();
   }, [fetchFiles]);
 
-  const uploadSingleFile = async (file: File) => {
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error(
-        `"${file.name}" exceeds the 50 MB upload limit (${(file.size / (1024 * 1024)).toFixed(1)} MB)`,
-      );
-      return;
-    }
-
-    setIsUploading(true);
-    const toastId = toast.loading(`Uploading & compressing ${file.name}...`);
-    try {
-      // Obtain direct backend upload URL and session token (bypassing Vercel 4.5 MB serverless limit)
-      let uploadUrl = "/api/storage";
-      let token = "";
-
-      try {
-        const tokenRes = await fetch("/api/storage/token", {
-          cache: "no-store",
-        });
-        if (tokenRes.ok) {
-          const authData = await tokenRes.json();
-          if (authData.uploadUrl) uploadUrl = authData.uploadUrl;
-          if (authData.token) token = authData.token;
-        }
-      } catch {
-        // Fallback to local endpoint if token fetch fails
-      }
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const res = await fetch(uploadUrl, {
-        method: "POST",
-        headers,
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        let errorMsg = `Upload failed (${res.status})`;
-        try {
-          const json = await res.json();
-          if (json.error) errorMsg = json.error;
-          else if (json.message) errorMsg = json.message;
-        } catch {
-          const text = await res.text();
-          if (text.includes("FUNCTION_PAYLOAD_TOO_LARGE")) {
-            errorMsg = "File exceeds the serverless payload limit.";
-          } else if (text) {
-            errorMsg = text.slice(0, 120);
-          }
-        }
-        throw new Error(errorMsg);
-      }
-
-      const json = await res.json();
-
-      toast.success("File uploaded & compressed successfully", {
-        id: toastId,
-        description: `Saved ${json.file?.savings_percent?.toFixed(1) || 0}% via Zstandard`,
-      });
-
-      setUploadOpen(false);
-      setSelectedFile(null);
+  // Subscribe to upload completion to auto-refresh file list
+  React.useEffect(() => {
+    const unsub = uploadQueue.onUploadComplete(() => {
       fetchFiles();
-    } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to upload file",
-        { id: toastId },
-      );
-    } finally {
-      setIsUploading(false);
-    }
-  };
+    });
+    return unsub;
+  }, [fetchFiles]);
 
-  const handleUploadSubmit = async (e: React.FormEvent) => {
+  const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) return;
-    await uploadSingleFile(selectedFile);
+    if (selectedFiles.length === 0) return;
+    uploadQueue.enqueue(selectedFiles);
+    toast.info(
+      `Queued ${selectedFiles.length} file${selectedFiles.length > 1 ? "s" : ""} for upload`,
+    );
+    setSelectedFiles([]);
+    setUploadOpen(false);
   };
 
   // Drag and drop handlers
@@ -447,15 +381,18 @@ function StorageContent() {
     e.stopPropagation();
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
     dragCounter.current = 0;
 
-    const droppedFiles = e.dataTransfer.files;
+    const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles && droppedFiles.length > 0) {
-      await uploadSingleFile(droppedFiles[0]);
+      uploadQueue.enqueue(droppedFiles);
+      toast.info(
+        `Queued ${droppedFiles.length} file${droppedFiles.length > 1 ? "s" : ""} for upload`,
+      );
     }
   };
 
@@ -2122,20 +2059,31 @@ function StorageContent() {
           <form onSubmit={handleUploadSubmit} className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="file-input" className="text-xs font-semibold">
-                Choose File
+                Choose Files
               </Label>
               <Input
                 id="file-input"
                 type="file"
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                multiple
+                onChange={(e) =>
+                  setSelectedFiles(Array.from(e.target.files || []))
+                }
                 className="cursor-pointer file:cursor-pointer max-w-full overflow-hidden text-ellipsis"
-                disabled={isUploading}
               />
-              {selectedFile && (
-                <p className="text-[11px] text-muted-foreground break-all">
-                  Selected: {selectedFile.name} (
-                  {formatBytes(selectedFile.size)})
-                </p>
+              {selectedFiles.length > 0 && (
+                <div className="text-[11px] text-muted-foreground space-y-0.5">
+                  <p className="font-medium text-foreground">
+                    Selected {selectedFiles.length} file
+                    {selectedFiles.length > 1 ? "s" : ""} (
+                    {formatBytes(
+                      selectedFiles.reduce((acc, f) => acc + f.size, 0),
+                    )}
+                    )
+                  </p>
+                  <p className="truncate text-muted-foreground/80">
+                    {selectedFiles.map((f) => f.name).join(", ")}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -2154,23 +2102,15 @@ function StorageContent() {
                 variant="outline"
                 size="sm"
                 onClick={() => setUploadOpen(false)}
-                disabled={isUploading}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 size="sm"
-                disabled={!selectedFile || isUploading}
+                disabled={selectedFiles.length === 0}
               >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Compressing &amp; Uploading...
-                  </>
-                ) : (
-                  "Upload File"
-                )}
+                Queue Upload ({selectedFiles.length})
               </Button>
             </DialogFooter>
           </form>
@@ -2321,6 +2261,9 @@ function StorageContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Floating Upload Queue Widget */}
+      <UploadQueueWidget />
     </div>
   );
 }
