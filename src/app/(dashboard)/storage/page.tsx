@@ -101,6 +101,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  downloadStorageFile,
+  getPublicStorageUrl,
+  resolveStorageUrl,
+} from "@/lib/storage";
 import { formatBytes } from "@/lib/utils";
 
 interface FileItem {
@@ -120,6 +125,7 @@ interface FileItem {
   s3_bucket?: string;
   s3_key?: string;
   s3_etag?: string;
+  s3_url?: string;
   created_at: string;
 }
 
@@ -512,19 +518,13 @@ function StorageContent() {
   }, []);
 
   const copyFileUrl = React.useCallback((file: FileItem) => {
-    const fullUrl = `http://localhost:8080${file.url}`;
+    const fullUrl = getPublicStorageUrl(file);
     navigator.clipboard.writeText(fullUrl);
     toast.success("Public URL copied to clipboard");
   }, []);
 
   const handleDownload = React.useCallback((file: FileItem) => {
-    const downloadUrl = `http://localhost:8080${file.url}`;
-    const a = document.createElement("a");
-    a.href = downloadUrl;
-    a.download = file.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadStorageFile(file);
     toast.success(`Downloading ${file.filename}`);
   }, []);
 
@@ -803,7 +803,7 @@ function StorageContent() {
                 {visual.type === "image" ? (
                   // biome-ignore lint/performance/noImgElement: dynamic user-uploaded asset preview
                   <img
-                    src={`http://localhost:8080${row.original.url}`}
+                    src={resolveStorageUrl(row.original, { format: "webp" })}
                     alt={row.original.filename}
                     className="h-full w-full object-cover"
                     onError={(e) => {
@@ -1677,7 +1677,7 @@ function StorageContent() {
                       {visual.type === "image" ? (
                         // biome-ignore lint/performance/noImgElement: dynamic user-uploaded asset preview
                         <img
-                          src={`http://localhost:8080${file.url}`}
+                          src={resolveStorageUrl(file, { format: "webp" })}
                           alt={file.filename}
                           className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
                           onError={(e) => {
@@ -1900,7 +1900,7 @@ function StorageContent() {
                   ).type === "image" ? (
                     // biome-ignore lint/performance/noImgElement: dynamic user-uploaded asset preview
                     <img
-                      src={`http://localhost:8080${activeInspector.url}`}
+                      src={resolveStorageUrl(activeInspector)}
                       alt={activeInspector.filename}
                       className="h-full w-full object-contain"
                     />
@@ -1985,6 +1985,41 @@ function StorageContent() {
                           : "Local Storage"}
                       </span>
                     </div>
+                    {activeInspector.storage_backend === "s3" &&
+                      activeInspector.s3_bucket && (
+                        <div className="p-2.5 flex items-center justify-between gap-2">
+                          <span className="text-muted-foreground">
+                            S3 Bucket
+                          </span>
+                          <span className="font-mono text-[11px] text-foreground">
+                            {activeInspector.s3_bucket}
+                          </span>
+                        </div>
+                      )}
+                    {activeInspector.storage_backend === "s3" &&
+                      activeInspector.s3_url && (
+                        <div className="p-2.5 flex items-center justify-between gap-2">
+                          <span className="text-muted-foreground">S3 URL</span>
+                          <div className="flex items-center gap-1 font-mono text-[11px]">
+                            <span
+                              className="truncate max-w-[140px]"
+                              title={activeInspector.s3_url}
+                            >
+                              {activeInspector.s3_url}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                copyToClipboard(activeInspector.s3_url || "")
+                              }
+                              aria-label="Copy S3 URL"
+                              className="hover:text-primary transition-colors cursor-pointer"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     <div className="p-2.5 flex items-center justify-between gap-2">
                       <span className="text-muted-foreground">SHA-256</span>
                       <div className="flex items-center gap-1 font-mono text-[11px]">
