@@ -2047,7 +2047,7 @@ function StorageContent() {
 
       {/* Upload Modal */}
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md w-full overflow-hidden sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg">Upload Object</DialogTitle>
             <DialogDescription className="text-xs">
@@ -2056,8 +2056,11 @@ function StorageContent() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleUploadSubmit} className="space-y-4 py-2">
-            <div className="space-y-2">
+          <form
+            onSubmit={handleUploadSubmit}
+            className="space-y-4 py-2 min-w-0 w-full overflow-hidden"
+          >
+            <div className="space-y-2 min-w-0 w-full">
               <Label htmlFor="file-input" className="text-xs font-semibold">
                 Choose Files
               </Label>
@@ -2068,26 +2071,61 @@ function StorageContent() {
                 onChange={(e) =>
                   setSelectedFiles(Array.from(e.target.files || []))
                 }
-                className="cursor-pointer file:cursor-pointer max-w-full overflow-hidden text-ellipsis"
+                className="cursor-pointer file:cursor-pointer w-full max-w-full min-w-0 overflow-hidden text-ellipsis"
               />
               {selectedFiles.length > 0 && (
-                <div className="text-[11px] text-muted-foreground space-y-0.5">
-                  <p className="font-medium text-foreground">
-                    Selected {selectedFiles.length} file
-                    {selectedFiles.length > 1 ? "s" : ""} (
-                    {formatBytes(
-                      selectedFiles.reduce((acc, f) => acc + f.size, 0),
-                    )}
-                    )
-                  </p>
-                  <p className="truncate text-muted-foreground/80">
-                    {selectedFiles.map((f) => f.name).join(", ")}
-                  </p>
+                <div className="space-y-1.5 min-w-0 w-full">
+                  <div className="flex items-center justify-between text-[11px] font-medium text-foreground">
+                    <span>
+                      Selected {selectedFiles.length} file
+                      {selectedFiles.length > 1 ? "s" : ""} (
+                      {formatBytes(
+                        selectedFiles.reduce((acc, f) => acc + f.size, 0),
+                      )}
+                      )
+                    </span>
+                    <button
+                      type="button"
+                      className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                      onClick={() => setSelectedFiles([])}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="max-h-36 overflow-y-auto space-y-1 pr-0.5 min-w-0 w-full">
+                    {selectedFiles.map((f, idx) => (
+                      <div
+                        key={`${f.name}-${f.size}-${idx}`}
+                        className="flex items-start justify-between gap-2 p-1.5 rounded bg-muted/40 border border-border/50 text-xs min-w-0 w-full"
+                      >
+                        <div className="min-w-0 flex-1 break-all break-words [overflow-wrap:anywhere] leading-snug">
+                          <span className="font-mono text-[11px] text-foreground">
+                            {f.name}
+                          </span>
+                          <span className="ml-1.5 text-[10px] text-muted-foreground font-sans whitespace-nowrap">
+                            ({formatBytes(f.size)})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-destructive shrink-0 p-0.5 cursor-pointer"
+                          onClick={() =>
+                            setSelectedFiles(
+                              selectedFiles.filter((_, i) => i !== idx),
+                            )
+                          }
+                          aria-label={`Remove ${f.name}`}
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs flex items-center justify-between">
+            <div className="p-3 rounded-lg bg-muted/40 border border-border text-xs flex items-center justify-between min-w-0 w-full">
               <span className="text-muted-foreground">
                 Active Storage Destination:
               </span>
