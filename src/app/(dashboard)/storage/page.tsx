@@ -290,6 +290,7 @@ function StorageContent() {
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = React.useState<FileItem | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const isFirstLoad = React.useRef(true);
 
   const fetchFiles = React.useCallback(async () => {
     setLoading(true);
@@ -311,6 +312,13 @@ function StorageContent() {
       }
       if (!statsRes.error) {
         setStats(statsRes);
+        if (isFirstLoad.current && statsRes.active_backend) {
+          isFirstLoad.current = false;
+          if (statsRes.active_backend !== backendFilter) {
+            setBackendFilter(statsRes.active_backend);
+            return;
+          }
+        }
       }
     } catch {
       toast.error("Failed to load storage files");
@@ -1340,7 +1348,7 @@ function StorageContent() {
               type="button"
               onClick={() => {
                 setCategoryFilter("all");
-                setBackendFilter("all");
+                setBackendFilter(stats?.active_backend || "all");
                 setGlobalFilter("");
               }}
               className="hover:text-foreground transition-colors cursor-pointer font-medium"
@@ -1351,8 +1359,10 @@ function StorageContent() {
             <span className="text-foreground font-semibold">
               {categoryFilter === "all"
                 ? backendFilter === "all"
-                  ? "all-files"
-                  : `${backendFilter}-storage`
+                  ? "All Storage"
+                  : backendFilter === "s3"
+                    ? "S3 Storage"
+                    : "Local Storage"
                 : categoryFilter}
             </span>
             <span className="text-[10px] text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border border-border/50 ml-1">
